@@ -201,3 +201,7 @@ class MJARView:
             self.http_server.server_close()
         print("🔌 MJARView closed")
 
+if __name__ == "__main__":
+    # Example usage
+    xml_path = "scenes/agilex_piper/scene.xml"  # Replace with your MuJoCo XML file path
+    vr_device_ip = "128.30.227.76"
