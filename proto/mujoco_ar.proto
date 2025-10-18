@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package mujoco_ar;
+
+// Service for communication between MuJoCo Python wrapper and VisionPro AR app
+service MuJoCoARService {
+  // Send initial handshake with USDZ URL
+  rpc SendHandshake(HandshakeRequest) returns (HandshakeResponse);
+  
+  // Stream pose updates from MuJoCo simulation
+  rpc StreamPoseUpdates(stream PoseUpdateRequest) returns (stream PoseUpdateResponse);
+  
+  // Send single pose update
+  rpc UpdatePoses(PoseUpdateRequest) returns (PoseUpdateResponse);
+}
+
+// Initial handshake message containing USDZ file URL
+message HandshakeRequest {
+  string usdz_url = 1;
+  string model_name = 2;
+  int32 num_bodies = 3;
+}
+
+message HandshakeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Pose update messages
+message PoseUpdateRequest {
+  map<string, BodyPose> body_poses = 1;
+  double timestamp = 2;
+}
+
+message PoseUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Individual body pose (position + quaternion rotation)
+message BodyPose {
+  Vector3 position = 1;
+  Quaternion rotation = 2;
+}
+
+// 3D Vector
+message Vector3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// Quaternion (w, x, y, z)
+message Quaternion {
+  float w = 1;
+  float x = 2;
+  float y = 3;
+  float z = 4;
+}
