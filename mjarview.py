@@ -2,16 +2,15 @@ import mujoco
 import mujoco_usd_converter, usdex.core
 from pxr import Sdf, Usd, UsdUtils
 import grpc
-import threading
 import time
+import threading
 import http.server
 import socketserver
 import os
-from concurrent import futures
+from pathlib import Path
 
-# Import generated gRPC stubs
-import mujoco_ar_pb2
-import mujoco_ar_pb2_grpc
+# Import generated gRPC classes
+from generated import mujoco_ar_pb2, mujoco_ar_pb2_grpc
 
 class MJARView:
 
@@ -29,15 +28,21 @@ class MJARView:
         
         # parse the number of bodies 
         self.bodies = {self.model.body(i).name: i for i in range(self.model.nbody)}
-
-        # Convert to USDZ
+        
+        # gRPC client setup
+        self.grpc_channel = None
+        self.grpc_stub = None
+        self.session_id = f"mjarview_{int(time.time())}"
+        
+        # HTTP server for USDZ file serving
+        self.http_server = None
+        self.http_thread = None
+        
+        # Convert to USDZ on initialization
         self._convert_to_usdz()
-        
-        # Start HTTP server for USDZ file serving
         self._start_http_server()
-        
-        # Initialize gRPC client
         self._setup_grpc_client()
+
 
     def _convert_to_usdz(self):
         """Convert MuJoCo XML to USDZ file"""
@@ -58,54 +63,68 @@ class MJARView:
 
     def _start_http_server(self):
         """Start HTTP server to serve USDZ file"""
-        def serve_files():
-            class CustomHandler(http.server.SimpleHTTPRequestHandler):
-                def __init__(self, *args, **kwargs):
-                    super().__init__(*args, directory=os.path.dirname(self.usdz_output_path), **kwargs)
-                    
-                def end_headers(self):
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-                    self.send_header('Access-Control-Allow-Headers', '*')
-                    super().end_headers()
-
-            with socketserver.TCPServer(("", self.http_port), CustomHandler) as httpd:
+        try:
+            # Change to directory containing USDZ file
+            usdz_dir = os.path.dirname(os.path.abspath(self.usdz_output_path))
+            os.chdir(usdz_dir)
+            
+            handler = http.server.SimpleHTTPRequestHandler
+            self.http_server = socketserver.TCPServer(("", self.http_port), handler)
+            
+            def serve_forever():
                 print(f"🌐 HTTP server started on port {self.http_port}")
-                httpd.serve_forever()
-
-        # Start HTTP server in background thread
-        self.http_thread = threading.Thread(target=serve_files, daemon=True)
-        self.http_thread.start()
-        
-        # Generate the USDZ URL
-        usdz_filename = os.path.basename(self.usdz_output_path)
-        self.usdz_url = f"http://localhost:{self.http_port}/{usdz_filename}"
-        print(f"📦 USDZ available at: {self.usdz_url}")
+                self.http_server.serve_forever()
+            
+            self.http_thread = threading.Thread(target=serve_forever, daemon=True)
+            self.http_thread.start()
+            
+        except Exception as e:
+            print(f"❌ Failed to start HTTP server: {e}")
 
     def _setup_grpc_client(self):
         """Setup gRPC client connection"""
-        self.channel = grpc.insecure_channel(f'{self.vr_device_ip}:{self.grpc_port}')
-        self.stub = mujoco_ar_pb2_grpc.MuJoCoARServiceStub(self.channel)
-        print(f"🔗 gRPC client connected to {self.vr_device_ip}:{self.grpc_port}")
-
-    def send_handshake(self):
-        """Send initial handshake with USDZ URL to VR device"""
         try:
-            request = mujoco_ar_pb2.HandshakeRequest(
-                usdz_url=self.usdz_url,
-                model_name=os.path.basename(self.xml_path).replace('.xml', ''),
-                num_bodies=self.model.nbody
+            target = f"{self.vr_device_ip}:{self.grpc_port}"
+            self.grpc_channel = grpc.insecure_channel(target)
+            self.grpc_stub = mujoco_ar_pb2_grpc.MuJoCoARServiceStub(self.grpc_channel)
+            print(f"🔗 gRPC client connected to {target}")
+            
+            # Send initial handshake with USDZ URL
+            self._send_usdz_url()
+            
+        except Exception as e:
+            print(f"❌ Failed to setup gRPC client: {e}")
+
+    def _send_usdz_url(self):
+        """Send USDZ URL to VR device"""
+        try:
+            usdz_filename = os.path.basename(self.usdz_output_path)
+            usdz_url = f"http://{self._get_local_ip()}:{self.http_port}/{usdz_filename}"
+            
+            request = mujoco_ar_pb2.UsdzUrlRequest(
+                usdz_url=usdz_url,
+                session_id=self.session_id
             )
             
-            response = self.stub.SendHandshake(request)
+            response = self.grpc_stub.SendUsdzUrl(request)
             if response.success:
-                print(f"✅ Handshake successful: {response.message}")
+                print(f"✅ USDZ URL sent successfully: {usdz_url}")
             else:
-                print(f"❌ Handshake failed: {response.message}")
-            return response.success
-        except grpc.RpcError as e:
-            print(f"❌ gRPC error during handshake: {e}")
-            return False
+                print(f"❌ Failed to send USDZ URL: {response.message}")
+                
+        except Exception as e:
+            print(f"❌ Error sending USDZ URL: {e}")
+
+    def _get_local_ip(self):
+        """Get local IP address"""
+        import socket
+        try:
+            # Connect to a remote server to determine local IP
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.connect(("8.8.8.8", 80))
+                return s.getsockname()[0]
+        except:
+            return "localhost"
 
     def get_poses(self): 
         """
@@ -121,60 +140,64 @@ class MJARView:
             }
         return body_dict
 
-    def _convert_poses_to_proto(self, poses_dict):
-        """Convert pose dictionary to protobuf format"""
-        proto_poses = {}
-        for body_name, pose_data in poses_dict.items():
-            position = mujoco_ar_pb2.Vector3(
-                x=pose_data["xpos"][0],
-                y=pose_data["xpos"][1], 
-                z=pose_data["xpos"][2]
-            )
-            rotation = mujoco_ar_pb2.Quaternion(
-                w=pose_data["xquat"][0],
-                x=pose_data["xquat"][1],
-                y=pose_data["xquat"][2], 
-                z=pose_data["xquat"][3]
-            )
-            proto_poses[body_name] = mujoco_ar_pb2.BodyPose(
-                position=position,
-                rotation=rotation
-            )
-        return proto_poses
-
     def update(self): 
         """
         Generate a pose dictionary and send it to the VR device over gRPC. 
         """
         try:
-            # Get current poses
             poses = self.get_poses()
+            body_poses = []
             
-            # Convert to protobuf format
-            proto_poses = self._convert_poses_to_proto(poses)
+            for body_name, pose_data in poses.items():
+                if body_name:  # Skip empty body names
+                    # Create protobuf objects
+                    position = mujoco_ar_pb2.Vector3(
+                        x=pose_data["xpos"][0],
+                        y=pose_data["xpos"][1], 
+                        z=pose_data["xpos"][2]
+                    )
+                    
+                    rotation = mujoco_ar_pb2.Quaternion(
+                        x=pose_data["xquat"][1],  # Note: MuJoCo uses w,x,y,z order
+                        y=pose_data["xquat"][2],
+                        z=pose_data["xquat"][3],
+                        w=pose_data["xquat"][0]   # w comes first in MuJoCo
+                    )
+                    
+                    body_pose = mujoco_ar_pb2.BodyPose(
+                        position=position,
+                        rotation=rotation,
+                        body_name=body_name
+                    )
+                    
+                    body_poses.append(body_pose)
             
-            # Create update request
+            # Create the update request
             request = mujoco_ar_pb2.PoseUpdateRequest(
-                body_poses=proto_poses,
+                body_poses=body_poses,
+                session_id=self.session_id,
                 timestamp=time.time()
             )
             
-            # Send update via gRPC
-            response = self.stub.UpdatePoses(request)
-            
-            if response.success:
-                print(f"✅ Pose update sent successfully")
+            # Send the update
+            if self.grpc_stub:
+                response = self.grpc_stub.UpdatePoses(request)
+                if response.success:
+                    print(f"📍 Updated {response.bodies_updated} bodies")
+                else:
+                    print(f"❌ Pose update failed: {response.message}")
             else:
-                print(f"❌ Pose update failed: {response.message}")
-            
-            return response.success
-            
-        except grpc.RpcError as e:
-            print(f"❌ gRPC error during pose update: {e}")
-            return False
+                print("❌ gRPC connection not available")
+                
+        except Exception as e:
+            print(f"❌ Error in update: {e}")
 
     def close(self):
         """Clean up resources"""
-        if hasattr(self, 'channel'):
-            self.channel.close()
-        print("🔌 gRPC connection closed")
+        if self.grpc_channel:
+            self.grpc_channel.close()
+        if self.http_server:
+            self.http_server.shutdown()
+            self.http_server.server_close()
+        print("🔌 MJARView closed")
+

@@ -2,6 +2,10 @@ import SwiftUI
 import RealityKit
 import Network
 
+// Import generated protobuf types
+// Note: These should be generated from your proto file
+// Make sure the generated files are included in your Xcode target
+
 // MARK: - TCP Server to Receive Handshake (Legacy - can be removed once gRPC is working)
 final class HandshakeServer: ObservableObject {
     @Published var usdzURL: String? = "http://localhost:8083/scene.usdz"
@@ -69,9 +73,20 @@ struct ImmersiveView: View {
             
             // Legacy TCP server (can be removed once gRPC is working)
             // server.startListening()
-            
-            // Observe URL updates from both gRPC and legacy TCP
-            await observeUsdzUpdates()
+        }
+        .onChange(of: usdzURL) { oldValue, newValue in
+            if let urlStr = newValue, let url = URL(string: urlStr) {
+                Task {
+                    await loadUsdzModel(from: url)
+                }
+            }
+        }
+        .onChange(of: server.usdzURL) { oldValue, newValue in
+            if let urlStr = newValue, let url = URL(string: urlStr) {
+                Task {
+                    await loadUsdzModel(from: url)
+                }
+            }
         }
         .onDisappear {
             Task {
@@ -85,7 +100,7 @@ struct ImmersiveView: View {
         self.usdzURL = url
     }
     
-    func updatePoses(_ poses: [String: Mujoco_arBodyPose]) {
+    func updatePoses(_ poses: [String: MujocoAr_BodyPose]) {
         for (bodyName, pose) in poses {
             if let bodyEntity = bodyEntities[bodyName] {
                 // Convert gRPC pose to RealityKit Transform
@@ -109,21 +124,6 @@ struct ImmersiveView: View {
         }
     }
     
-    private func observeUsdzUpdates() async {
-        // Monitor usdzURL changes
-        for await urlStr in $usdzURL.values {
-            guard let urlStr,
-                  let url = URL(string: urlStr) else { continue }
-            await loadUsdzModel(from: url)
-        }
-        
-        // Also monitor legacy server updates
-        for await urlStr in server.$usdzURL.values {
-            guard let urlStr,
-                  let url = URL(string: urlStr) else { continue }
-            await loadUsdzModel(from: url)
-        }
-    }
     
     private func loadUsdzModel(from url: URL) async {
         do {
@@ -176,7 +176,6 @@ struct ImmersiveView: View {
         indexChildren(rootEntity)
         print("📝 Indexed \(bodyEntities.count) body entities")
     }
-    }
 
     private func setupInteraction(for model: ModelEntity) {
         let bounds = model.model?.mesh.bounds.extents ?? .one
@@ -186,4 +185,3 @@ struct ImmersiveView: View {
 //        model.components.physics
     }
 }
-

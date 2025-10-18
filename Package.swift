@@ -1,29 +1,29 @@
-// swift-tools-version: 5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
-    name: "MuJoCoAR",
+    name: "MuJoCoARViewer",
     platforms: [
+        .visionOS(.v1),
         .iOS(.v17),
-        .visionOS(.v1)
-    ],
-    products: [
-        .library(
-            name: "MuJoCoAR",
-            targets: ["MuJoCoAR"]),
+        .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.21.0"),
-        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.25.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-2.git", from: "2.0.0"),
+        .package(url: "https://github.com/grpc/grpc-swift-protobuf.git", from: "2.0.0"),
     ],
     targets: [
         .target(
-            name: "MuJoCoAR",
+            name: "MuJoCoARViewer",
             dependencies: [
-                .product(name: "GRPC", package: "grpc-swift"),
-                .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-            ]),
+                .product(name: "GRPCCore", package: "grpc-swift-2"),
+                .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport"),
+                .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf"),
+            ]
+        ),
+        .testTarget(
+            name: "MuJoCoARViewerTests",
+            dependencies: ["MuJoCoARViewer"]
+        ),
     ]
 )

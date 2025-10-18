@@ -6,7 +6,7 @@ import mujoco_ar_pb2 as mujoco__ar__pb2
 
 
 class MuJoCoARServiceStub(object):
-    """Service for communication between MuJoCo Python wrapper and VisionPro AR app
+    """Service definition for MuJoCo AR communication
     """
 
     def __init__(self, channel):
@@ -15,13 +15,13 @@ class MuJoCoARServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.SendHandshake = channel.unary_unary(
-                '/mujoco_ar.MuJoCoARService/SendHandshake',
-                request_serializer=mujoco__ar__pb2.HandshakeRequest.SerializeToString,
-                response_deserializer=mujoco__ar__pb2.HandshakeResponse.FromString,
+        self.SendUsdzUrl = channel.unary_unary(
+                '/mujoco_ar.MuJoCoARService/SendUsdzUrl',
+                request_serializer=mujoco__ar__pb2.UsdzUrlRequest.SerializeToString,
+                response_deserializer=mujoco__ar__pb2.UsdzUrlResponse.FromString,
                 )
-        self.StreamPoseUpdates = channel.stream_stream(
-                '/mujoco_ar.MuJoCoARService/StreamPoseUpdates',
+        self.StreamPoses = channel.stream_stream(
+                '/mujoco_ar.MuJoCoARService/StreamPoses',
                 request_serializer=mujoco__ar__pb2.PoseUpdateRequest.SerializeToString,
                 response_deserializer=mujoco__ar__pb2.PoseUpdateResponse.FromString,
                 )
@@ -33,25 +33,25 @@ class MuJoCoARServiceStub(object):
 
 
 class MuJoCoARServiceServicer(object):
-    """Service for communication between MuJoCo Python wrapper and VisionPro AR app
+    """Service definition for MuJoCo AR communication
     """
 
-    def SendHandshake(self, request, context):
-        """Send initial handshake with USDZ URL
+    def SendUsdzUrl(self, request, context):
+        """Send USDZ URL to VR device
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamPoseUpdates(self, request_iterator, context):
-        """Stream pose updates from MuJoCo simulation
+    def StreamPoses(self, request_iterator, context):
+        """Stream body pose updates to VR device
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def UpdatePoses(self, request, context):
-        """Send single pose update
+        """Single pose update (alternative to streaming)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -60,13 +60,13 @@ class MuJoCoARServiceServicer(object):
 
 def add_MuJoCoARServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'SendHandshake': grpc.unary_unary_rpc_method_handler(
-                    servicer.SendHandshake,
-                    request_deserializer=mujoco__ar__pb2.HandshakeRequest.FromString,
-                    response_serializer=mujoco__ar__pb2.HandshakeResponse.SerializeToString,
+            'SendUsdzUrl': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendUsdzUrl,
+                    request_deserializer=mujoco__ar__pb2.UsdzUrlRequest.FromString,
+                    response_serializer=mujoco__ar__pb2.UsdzUrlResponse.SerializeToString,
             ),
-            'StreamPoseUpdates': grpc.stream_stream_rpc_method_handler(
-                    servicer.StreamPoseUpdates,
+            'StreamPoses': grpc.stream_stream_rpc_method_handler(
+                    servicer.StreamPoses,
                     request_deserializer=mujoco__ar__pb2.PoseUpdateRequest.FromString,
                     response_serializer=mujoco__ar__pb2.PoseUpdateResponse.SerializeToString,
             ),
@@ -83,11 +83,11 @@ def add_MuJoCoARServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class MuJoCoARService(object):
-    """Service for communication between MuJoCo Python wrapper and VisionPro AR app
+    """Service definition for MuJoCo AR communication
     """
 
     @staticmethod
-    def SendHandshake(request,
+    def SendUsdzUrl(request,
             target,
             options=(),
             channel_credentials=None,
@@ -97,14 +97,14 @@ class MuJoCoARService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/mujoco_ar.MuJoCoARService/SendHandshake',
-            mujoco__ar__pb2.HandshakeRequest.SerializeToString,
-            mujoco__ar__pb2.HandshakeResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/mujoco_ar.MuJoCoARService/SendUsdzUrl',
+            mujoco__ar__pb2.UsdzUrlRequest.SerializeToString,
+            mujoco__ar__pb2.UsdzUrlResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def StreamPoseUpdates(request_iterator,
+    def StreamPoses(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -114,7 +114,7 @@ class MuJoCoARService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/mujoco_ar.MuJoCoARService/StreamPoseUpdates',
+        return grpc.experimental.stream_stream(request_iterator, target, '/mujoco_ar.MuJoCoARService/StreamPoses',
             mujoco__ar__pb2.PoseUpdateRequest.SerializeToString,
             mujoco__ar__pb2.PoseUpdateResponse.FromString,
             options, channel_credentials,

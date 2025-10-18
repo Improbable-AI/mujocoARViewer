@@ -1,56 +1,55 @@
 # MuJoCo AR Viewer
 
-A real-time AR visualization system that streams MuJoCo physics simulations to Apple Vision Pro using gRPC and RealityKit.
+A mixed-reality application that visualizes MuJoCo simulations on Apple Vision Pro using RealityKit and gRPC communication.
 
 ## Overview
 
 This project consists of two main components:
 
-1. **Python MuJoCo Wrapper** (`mjarview.py`) - Converts MuJoCo XML models to USDZ format and streams pose updates
-2. **Vision Pro AR App** (Swift/RealityKit) - Receives and visualizes the 3D models with real-time pose updates
+1. **Python MuJoCo Wrapper (`MJARView`)**: Converts MuJoCo XML files to USDZ format and streams pose updates via gRPC
+2. **Vision Pro App**: Receives USDZ models via HTTP and pose updates via gRPC to render real-time MuJoCo simulations in mixed reality
 
-## Architecture
+## Workflow
 
-```
-[MuJoCo Simulation] → [USDZ Conversion] → [HTTP Server] → [gRPC Updates] → [Vision Pro AR]
-```
+1. `MJARView` loads a MuJoCo XML file and converts it to USDZ format
+2. Starts an HTTP server to serve the USDZ file 
+3. Sends handshake to Vision Pro app with USDZ download URL
+4. Vision Pro app downloads and loads the USDZ model in RealityKit
+5. `MJARView` streams real-time pose updates via gRPC
+6. Vision Pro app updates entity positions/rotations in real-time
 
-### Workflow
+## Setup Instructions
 
-1. **Model Conversion**: MJARView converts MuJoCo XML to USDZ format
-2. **File Serving**: HTTP server serves the USDZ file for download
-3. **Handshake**: gRPC handshake sends USDZ URL to Vision Pro
-4. **Model Loading**: Vision Pro downloads and loads the USDZ model
-5. **Real-time Updates**: gRPC streams pose updates for real-time visualization
-
-## Setup
-
-### Python Environment
+### Python Environment (MuJoCo Side)
 
 1. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install mujoco grpcio grpcio-tools protobuf
+# Install mujoco-usd-converter and usdex.core as needed for your setup
 ```
 
-2. Generate gRPC stubs:
+2. Generate Python gRPC code (already done):
 ```bash
-./generate_proto.sh
+python -m grpc_tools.protoc -I./proto --python_out=./generated --grpc_python_out=./generated proto/mujoco_ar.proto
 ```
 
-### Swift/Vision Pro Setup
+3. Update IP address in `example_usage.py` to match your Vision Pro's IP address
 
-1. Install gRPC tools:
+### Vision Pro App (Swift/RealityKit)
+
+1. Install Swift gRPC dependencies via Homebrew:
 ```bash
-brew install swift-protobuf grpc-swift
+brew install swift-protobuf protoc-gen-grpc-swift
 ```
 
-2. Generate Swift gRPC files:
+2. Generate Swift gRPC code (already done):
 ```bash
-./generate_swift_proto.sh
+protoc --swift_out=./ImmersiveMoveAndRotate/Generated --plugin=protoc-gen-grpc-swift=/opt/homebrew/bin/protoc-gen-grpc-swift-2 --grpc-swift_out=./ImmersiveMoveAndRotate/Generated proto/mujoco_ar.proto
 ```
 
-3. Add the generated files to your Xcode project
-4. Add gRPC-Swift dependency to your project
+3. Add the generated Swift files to your Xcode project
+
+4. Build and deploy to Vision Pro
 
 ## Usage
 
@@ -58,93 +57,85 @@ brew install swift-protobuf grpc-swift
 
 ```python
 from mjarview import MJARView
+import time
 
-# Initialize with MuJoCo XML file and Vision Pro IP
-mjar = MJARView(
-    xml_path="your_model.xml",
-    vr_device_ip="192.168.1.100",  # Vision Pro IP
+# Initialize with your MuJoCo XML file and Vision Pro IP
+viewer = MJARView(
+    xml_path="path/to/your/model.xml",
+    vr_device_ip="192.168.1.100",  # Your Vision Pro IP
     grpc_port=50051,
     http_port=8083
 )
 
-# Send initial handshake
-mjar.send_handshake()
-
 # Simulation loop
 while True:
-    # Step your MuJoCo simulation
-    mujoco.mj_step(mjar.model, mjar.data)
-    
-    # Send pose updates to AR
-    mjar.update()
-    
-    time.sleep(1/60)  # 60 Hz
-
-# Cleanup
-mjar.close()
+    viewer.step()  # Steps simulation and sends pose updates
+    time.sleep(0.016)  # ~60 FPS
 ```
 
 ### Vision Pro Side
 
-The Vision Pro app automatically:
-1. Starts a gRPC server on port 50051
-2. Receives handshake with USDZ URL
-3. Downloads and loads the 3D model
-4. Applies real-time pose updates from the simulation
+1. Launch the app on Vision Pro
+2. The app automatically starts listening for gRPC connections on port 50051
+3. Run your Python script - it will:
+   - Send handshake with USDZ URL
+   - App downloads and loads the 3D model
+   - Real-time pose updates stream from Python to Vision Pro
 
 ## gRPC Protocol
 
-The communication uses a custom gRPC protocol defined in `proto/mujoco_ar.proto`:
+The communication uses Protocol Buffers with the following key messages:
 
-- **SendHandshake**: Initial connection with USDZ URL
-- **UpdatePoses**: Single pose update for all bodies
-- **StreamPoseUpdates**: Streaming pose updates (for high-frequency updates)
+- `HandshakeRequest`: Initial setup with USDZ URL and session info
+- `PoseUpdate`: Real-time body pose updates (position + quaternion rotation)
+- `BodyPose`: Individual body position (Vector3) and rotation (Quaternion)
 
 ## File Structure
 
 ```
-├── mjarview.py              # Main Python wrapper class
-├── test_mjarview.py         # Example usage script
 ├── proto/
-│   └── mujoco_ar.proto      # gRPC protocol definition
-├── ImmersiveMoveAndRotate/  # Vision Pro Swift app
-│   ├── ImmersiveView.swift  # Main AR view
-│   └── GRPCServer.swift     # gRPC server implementation
-├── requirements.txt         # Python dependencies
-└── Package.swift           # Swift package dependencies
+│   └── mujoco_ar.proto          # Protocol buffer definition
+├── generated/                   # Generated Python gRPC code
+├── ImmersiveMoveAndRotate/
+│   ├── Generated/               # Generated Swift gRPC code
+│   ├── GRPCServer.swift         # gRPC server implementation
+│   ├── ImmersiveView.swift      # Main RealityKit view
+│   └── APIHandler.swift         # USDZ loading helper
+├── mjarview.py                  # Main Python wrapper class
+├── example_usage.py             # Example usage script
+└── requirements.txt             # Python dependencies
 ```
-
-## Requirements
-
-### Python
-- Python 3.8+
-- MuJoCo
-- gRPC
-- USD/USDZ libraries
-
-### Vision Pro
-- visionOS 1.0+
-- Swift 5.9+
-- RealityKit
-- gRPC-Swift
 
 ## Network Configuration
 
-1. Ensure your Vision Pro and development machine are on the same network
-2. Find your Vision Pro's IP address in Settings → Wi-Fi
-3. Configure firewall to allow connections on ports 50051 (gRPC) and 8083 (HTTP)
+- **gRPC Port**: 50051 (configurable)
+- **HTTP Port**: 8083 (configurable) 
+- Ensure both devices are on the same network
+- Vision Pro must be able to reach the Python machine's IP address
 
 ## Troubleshooting
 
-- **Connection Issues**: Check network connectivity and firewall settings
-- **USDZ Loading**: Verify HTTP server is accessible from Vision Pro
-- **Pose Updates**: Ensure gRPC server is running and accepting connections
-- **Model Conversion**: Check MuJoCo XML file is valid and USD libraries are installed
+1. **Connection Issues**: Verify both devices are on same network and firewall allows traffic on specified ports
+2. **USDZ Loading Errors**: Check HTTP server is accessible and USDZ file was generated correctly
+3. **Pose Update Issues**: Verify gRPC connection is established and body names match between MuJoCo model and USDZ
 
-## Contributing
+## Dependencies
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### Python
+- `mujoco`
+- `grpcio` & `grpcio-tools`
+- `protobuf`
+- `mujoco-usd-converter` & `usdex.core`
+
+### Swift/iOS
+- GRPC Swift package
+- RealityKit
+- SwiftUI
+
+## Future Enhancements
+
+- [ ] Support for joint visualization
+- [ ] Real-time physics parameter adjustment
+- [ ] Multiple simultaneous sessions
+- [ ] Gesture-based interaction with MuJoCo bodies
+- [ ] Recording and playback of simulations

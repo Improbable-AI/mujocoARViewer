@@ -2,58 +2,62 @@ syntax = "proto3";
 
 package mujoco_ar;
 
-// Service for communication between MuJoCo Python wrapper and VisionPro AR app
+// Service definition for MuJoCo AR communication
 service MuJoCoARService {
-  // Send initial handshake with USDZ URL
-  rpc SendHandshake(HandshakeRequest) returns (HandshakeResponse);
+  // Send USDZ URL to VR device
+  rpc SendUsdzUrl(UsdzUrlRequest) returns (UsdzUrlResponse);
   
-  // Stream pose updates from MuJoCo simulation
-  rpc StreamPoseUpdates(stream PoseUpdateRequest) returns (stream PoseUpdateResponse);
+  // Stream body pose updates to VR device
+  rpc StreamPoses(stream PoseUpdateRequest) returns (stream PoseUpdateResponse);
   
-  // Send single pose update
+  // Single pose update (alternative to streaming)
   rpc UpdatePoses(PoseUpdateRequest) returns (PoseUpdateResponse);
 }
 
-// Initial handshake message containing USDZ file URL
-message HandshakeRequest {
+// Request to send USDZ URL
+message UsdzUrlRequest {
   string usdz_url = 1;
-  string model_name = 2;
-  int32 num_bodies = 3;
+  string session_id = 2;
 }
 
-message HandshakeResponse {
+// Response for USDZ URL
+message UsdzUrlResponse {
   bool success = 1;
   string message = 2;
 }
 
-// Pose update messages
-message PoseUpdateRequest {
-  map<string, BodyPose> body_poses = 1;
-  double timestamp = 2;
-}
-
-message PoseUpdateResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-// Individual body pose (position + quaternion rotation)
-message BodyPose {
-  Vector3 position = 1;
-  Quaternion rotation = 2;
-}
-
-// 3D Vector
+// 3D Vector for position
 message Vector3 {
   float x = 1;
   float y = 2;
   float z = 3;
 }
 
-// Quaternion (w, x, y, z)
+// Quaternion for rotation
 message Quaternion {
-  float w = 1;
-  float x = 2;
-  float y = 3;
-  float z = 4;
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  float w = 4;
+}
+
+// Body pose containing position and rotation
+message BodyPose {
+  Vector3 position = 1;
+  Quaternion rotation = 2;
+  string body_name = 3;
+}
+
+// Request containing multiple body poses
+message PoseUpdateRequest {
+  repeated BodyPose body_poses = 1;
+  string session_id = 2;
+  double timestamp = 3;
+}
+
+// Response for pose updates
+message PoseUpdateResponse {
+  bool success = 1;
+  string message = 2;
+  int32 bodies_updated = 3;
 }
