@@ -205,3 +205,10 @@ if __name__ == "__main__":
     # Example usage
     xml_path = "scenes/agilex_piper/scene.xml"  # Replace with your MuJoCo XML file path
     vr_device_ip = "128.30.227.76"
+
+    ar_view = MJARView(
+        xml_path=xml_path,
+        vr_device_ip=vr_device_ip,
+        grpc_port=50051,
+        http_port=8083
+    )
