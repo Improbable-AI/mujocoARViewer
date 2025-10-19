@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mujoco-ar-viewer"
+version = "0.1.0"
+description = "AR visualization for MuJoCo physics simulations"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Improbable AI"}
+]
+keywords = ["mujoco", "ar", "vr", "visualization", "physics", "simulation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "mujoco>=3.1.0",
+    "mujoco-usd-converter>=0.2.0",
+    "usd-core>=23.11",
+    "grpcio>=1.56.0",
+    "grpcio-tools>=1.56.0",
+    "numpy>=1.24.0",
+    "protobuf>=4.24.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Improbable-AI/mujocoARViewer"
+Repository = "https://github.com/Improbable-AI/mujocoARViewer"
+Issues = "https://github.com/Improbable-AI/mujocoARViewer/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mujoco_arviewer*"]
+exclude = ["tests*", "scenes*", "Source*"]
+
+[tool.setuptools.package-data]
+mujoco_arviewer = ["generated/*.py"]

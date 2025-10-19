@@ -1,141 +1,98 @@
 # MuJoCo AR Viewer
 
-A mixed-reality application that visualizes MuJoCo simulations on Apple Vision Pro using RealityKit and gRPC communication.
+A Python package for visualizing MuJoCo physics simulations in Augmented Reality using Apple Vision Pro and other AR devices.
 
-## Overview
+## Installation
 
-This project consists of two main components:
-
-1. **Python MuJoCo Wrapper (`MJARView`)**: Converts MuJoCo XML files to USDZ format and streams pose updates via gRPC
-2. **Vision Pro App**: Receives USDZ models via HTTP and pose updates via gRPC to render real-time MuJoCo simulations in mixed reality
-
-## Workflow
-
-1. `MJARView` loads a MuJoCo XML file and converts it to USDZ format
-2. Starts an HTTP server to serve the USDZ file 
-3. Sends handshake to Vision Pro app with USDZ download URL
-4. Vision Pro app downloads and loads the USDZ model in RealityKit
-5. `MJARView` streams real-time pose updates via gRPC
-6. Vision Pro app updates entity positions/rotations in real-time
-
-## Setup Instructions
-
-### Python Environment (MuJoCo Side)
-
-1. Install dependencies:
 ```bash
-pip install mujoco grpcio grpcio-tools protobuf
-# Install mujoco-usd-converter and usdex.core as needed for your setup
+pip install mujoco-ar-viewer
 ```
 
-2. Generate Python gRPC code (already done):
-```bash
-python -m grpc_tools.protoc -I./proto --python_out=./generated --grpc_python_out=./generated proto/mujoco_ar.proto
-```
-
-3. Update IP address in `example_usage.py` to match your Vision Pro's IP address
-
-### Vision Pro App (Swift/RealityKit)
-
-1. Install Swift gRPC dependencies via Homebrew:
-```bash
-brew install swift-protobuf protoc-gen-grpc-swift
-```
-
-2. Generate Swift gRPC code (already done):
-```bash
-protoc --swift_out=./ImmersiveMoveAndRotate/Generated --plugin=protoc-gen-grpc-swift=/opt/homebrew/bin/protoc-gen-grpc-swift-2 --grpc-swift_out=./ImmersiveMoveAndRotate/Generated proto/mujoco_ar.proto
-```
-
-3. Add the generated Swift files to your Xcode project
-
-4. Build and deploy to Vision Pro
-
-## Usage
-
-### Python Side
+## Quick Start
 
 ```python
-from mjarview import MJARView
-import time
+from mujoco_arviewer import MJARViewer
+import mujoco
 
-# Initialize with your MuJoCo XML file and Vision Pro IP
-viewer = MJARView(
-    xml_path="path/to/your/model.xml",
-    vr_device_ip="192.168.1.100",  # Your Vision Pro IP
-    grpc_port=50051,
-    http_port=8083
-)
+# Initialize the AR viewer with your device's IP
+viewer = MJARViewer(avp_ip="192.168.1.100")
+
+# Send a MuJoCo model to the AR device
+viewer.send_model("path/to/your/model.xml")
+
+# Set up your MuJoCo simulation
+model = mujoco.MjModel.from_xml_path("path/to/your/model.xml")
+data = mujoco.MjData(model)
+
+# Register the model and data with the viewer
+viewer.register(model, data)
 
 # Simulation loop
 while True:
-    viewer.step()  # Steps simulation and sends pose updates
-    time.sleep(0.016)  # ~60 FPS
+    # Step the simulation
+    mujoco.mj_step(model, data)
+    
+    # Sync with AR device
+    viewer.sync()
 ```
 
-### Vision Pro Side
+## Features
 
-1. Launch the app on Vision Pro
-2. The app automatically starts listening for gRPC connections on port 50051
-3. Run your Python script - it will:
-   - Send handshake with USDZ URL
-   - App downloads and loads the 3D model
-   - Real-time pose updates stream from Python to Vision Pro
+- **Easy Integration**: Simple API that integrates seamlessly with existing MuJoCo simulations
+- **Real-time Visualization**: Stream live simulation data to AR devices
+- **Cross-platform**: Works on macOS, Linux, and Windows
+- **Efficient Transfer**: Optimized data transfer protocols for large models
+- **Multiple Formats**: Support for both MuJoCo XML and USDZ files
 
-## gRPC Protocol
+## API Reference
 
-The communication uses Protocol Buffers with the following key messages:
+### MJARViewer
 
-- `HandshakeRequest`: Initial setup with USDZ URL and session info
-- `PoseUpdate`: Real-time body pose updates (position + quaternion rotation)
-- `BodyPose`: Individual body position (Vector3) and rotation (Quaternion)
+The main class for AR visualization of MuJoCo simulations.
 
-## File Structure
+#### `__init__(avp_ip, grpc_port=50051)`
 
-```
-├── proto/
-│   └── mujoco_ar.proto          # Protocol buffer definition
-├── generated/                   # Generated Python gRPC code
-├── ImmersiveMoveAndRotate/
-│   ├── Generated/               # Generated Swift gRPC code
-│   ├── GRPCServer.swift         # gRPC server implementation
-│   ├── ImmersiveView.swift      # Main RealityKit view
-│   └── APIHandler.swift         # USDZ loading helper
-├── mjarview.py                  # Main Python wrapper class
-├── example_usage.py             # Example usage script
-└── requirements.txt             # Python dependencies
-```
+Initialize the AR viewer.
 
-## Network Configuration
+**Parameters:**
+- `avp_ip` (str): IP address of the AR device
+- `grpc_port` (int, optional): gRPC port for communication. Defaults to 50051.
 
-- **gRPC Port**: 50051 (configurable)
-- **HTTP Port**: 8083 (configurable) 
-- Ensure both devices are on the same network
-- Vision Pro must be able to reach the Python machine's IP address
+#### `send_model(model_path)`
 
-## Troubleshooting
+Send a MuJoCo model to the AR device.
 
-1. **Connection Issues**: Verify both devices are on same network and firewall allows traffic on specified ports
-2. **USDZ Loading Errors**: Check HTTP server is accessible and USDZ file was generated correctly
-3. **Pose Update Issues**: Verify gRPC connection is established and body names match between MuJoCo model and USDZ
+**Parameters:**
+- `model_path` (str): Path to MuJoCo XML file or USDZ file
 
-## Dependencies
+#### `register(model, data)`
 
-### Python
-- `mujoco`
-- `grpcio` & `grpcio-tools`
-- `protobuf`
-- `mujoco-usd-converter` & `usdex.core`
+Register MuJoCo model and data for pose updates.
 
-### Swift/iOS
-- GRPC Swift package
-- RealityKit
-- SwiftUI
+**Parameters:**
+- `model`: MuJoCo MjModel instance
+- `data`: MuJoCo MjData instance
 
-## Future Enhancements
+#### `sync()`
 
-- [ ] Support for joint visualization
-- [ ] Real-time physics parameter adjustment
-- [ ] Multiple simultaneous sessions
-- [ ] Gesture-based interaction with MuJoCo bodies
-- [ ] Recording and playback of simulations
+Synchronize the current simulation state with the AR device. Call this regularly in your simulation loop.
+
+#### `close()`
+
+Close the viewer and clean up resources.
+
+## Requirements
+
+- Python 3.8+
+- MuJoCo 3.1.0+
+- gRPC
+- USD/USDZ support
+- Apple Vision Pro or compatible AR device
+
+## License
+
+MIT License
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

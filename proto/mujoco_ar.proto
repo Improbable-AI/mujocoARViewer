@@ -7,6 +7,12 @@ service MuJoCoARService {
   // Send USDZ URL to VR device
   rpc SendUsdzUrl(UsdzUrlRequest) returns (UsdzUrlResponse);
   
+  // Send USDZ file data directly
+  rpc SendUsdzData(UsdzDataRequest) returns (UsdzDataResponse);
+  
+  // Send USDZ file data in chunks (for large files)
+  rpc SendUsdzDataChunked(stream UsdzChunkRequest) returns (UsdzDataResponse);
+  
   // Stream body pose updates to VR device
   rpc StreamPoses(stream PoseUpdateRequest) returns (stream PoseUpdateResponse);
   
@@ -24,6 +30,31 @@ message UsdzUrlRequest {
 message UsdzUrlResponse {
   bool success = 1;
   string message = 2;
+}
+
+// Request to send USDZ file data
+message UsdzDataRequest {
+  bytes usdz_data = 1;
+  string filename = 2;
+  string session_id = 3;
+}
+
+// Request for chunked USDZ file transfer
+message UsdzChunkRequest {
+  bytes chunk_data = 1;
+  string filename = 2;
+  string session_id = 3;
+  int32 chunk_index = 4;
+  int32 total_chunks = 5;
+  int64 total_size = 6;
+  bool is_last_chunk = 7;
+}
+
+// Response for USDZ data
+message UsdzDataResponse {
+  bool success = 1;
+  string message = 2;
+  string local_file_path = 3;
 }
 
 // 3D Vector for position

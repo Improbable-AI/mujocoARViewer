@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include mujoco_arviewer *.py
+recursive-include mujoco_arviewer/generated *.py
+exclude example_usage.py
+exclude test_setup.py
+exclude mjarview.py
+prune scenes
+prune Source
+prune mujocoARViewer.xcodeproj
+prune proto

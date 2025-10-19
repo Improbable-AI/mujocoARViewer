@@ -1,0 +1,1 @@
+# Generated gRPC code for MuJoCo AR communication
