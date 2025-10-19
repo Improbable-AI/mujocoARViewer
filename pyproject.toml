@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "AR visualization for MuJoCo physics simulations"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
 authors = [
     {name = "Improbable AI"}
 ]
@@ -17,7 +16,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -29,12 +28,16 @@ classifiers = [
 ]
 dependencies = [
     "mujoco>=3.1.0",
-    "mujoco-usd-converter>=0.2.0",
-    "usd-core>=23.11",
     "grpcio>=1.56.0",
     "grpcio-tools>=1.56.0",
     "numpy>=1.24.0",
     "protobuf>=4.24.0",
+]
+
+[project.optional-dependencies]
+usd = [
+    "mujoco-usd-converter>=0.2.0",
+    "usd-core>=23.11",
 ]
 
 [project.urls]

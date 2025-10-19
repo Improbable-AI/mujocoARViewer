@@ -11,9 +11,10 @@ import NIOPosix
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 final class GRPCServerManager: ObservableObject {
     private var grpcServer: GRPCServer<HTTP2ServerTransport.Posix>?
-    private let port = 50051
+    private var currentPort: Int = 50051
     
-    func startServer(immersiveView: ImmersiveView) async {
+    func startServer(immersiveView: ImmersiveView, port: Int = 50051) async {
+        self.currentPort = port
         print("🚀 Starting gRPC server...")
         do {
             // Create the service implementation
@@ -22,10 +23,10 @@ final class GRPCServerManager: ObservableObject {
             
             // Create the gRPC server with NIO transport
             let transport = HTTP2ServerTransport.Posix(
-                address: .ipv4(host: "0.0.0.0", port: port),
+                address: .ipv4(host: "0.0.0.0", port: currentPort),
                 transportSecurity: .plaintext
             )
-            print("✅ Created HTTP2ServerTransport on port \(port)")
+            print("✅ Created HTTP2ServerTransport on port \(currentPort)")
             
             let server = GRPCServer(
                 transport: transport,
@@ -37,7 +38,7 @@ final class GRPCServerManager: ObservableObject {
             
             print("🎯 Starting server.serve()...")
             try await server.serve()
-            print("🚀 gRPC server started successfully on port \(port)")
+            print("🚀 gRPC server started successfully on port \(currentPort)")
             
         } catch {
             print("❌ Failed to start gRPC server: \(error)")

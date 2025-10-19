@@ -12,6 +12,6 @@ Classes:
 __version__ = "0.1.0"
 __author__ = "Improbable AI"
 
-from .viewer import MJARViewer, MJARView
+from .viewer import MJARViewer
 
-__all__ = ["MJARViewer", "MJARView"]
+__all__ = ["MJARViewer"]

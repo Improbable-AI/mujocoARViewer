@@ -1,0 +1,9 @@
+mujoco>=3.1.0
+grpcio>=1.56.0
+grpcio-tools>=1.56.0
+numpy>=1.24.0
+protobuf>=4.24.0
+
+[usd]
+mujoco-usd-converter>=0.2.0
+usd-core>=23.11

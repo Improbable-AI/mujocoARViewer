@@ -1,9 +1,5 @@
 # Core MuJoCo dependencies
 mujoco>=3.1.0
-mujoco-usd-converter>=0.2.0
-
-# USD/USDZ dependencies  
-usd-core>=23.11
 
 # gRPC dependencies
 grpcio>=1.56.0
