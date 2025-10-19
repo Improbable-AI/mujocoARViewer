@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import mujoco_ar_pb2 as mujoco__ar__pb2
+from . import mujoco_ar_pb2 as mujoco__ar__pb2
 
 
 class MuJoCoARServiceStub(object):
