@@ -2,11 +2,22 @@
 
 A Python package for visualizing MuJoCo physics simulations in Augmented Reality using Apple Vision Pro and other AR devices.
 
+![assets/diagram-mjar.png](assets/diagram-mjar.png)
+
+
 ## Installation
 
 ```bash
 pip install mujoco-ar-viewer
 ```
+
+To use automatic MuJoCo XML-to-USD conversion feature (supported only on Linux and Windows via ), use: 
+
+```
+pip install "mujoco-ar-viewer[usd]"
+```
+
+Note that 
 
 ## Quick Start
 
