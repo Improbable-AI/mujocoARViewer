@@ -98,7 +98,9 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
     Limited macOS compatibility for automatic XML-to-USD conversion comes from [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter), which internally relies on [OpenUSD Exchange SDK](https://github.com/NVIDIA-Omniverse/usd-exchange) which only supports Linux and Windows at this moment. For now, if you want to use this software on macOS, you can separately convert your XML into USD using [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter) and bring the USD file over to macOS. Then, you instead of specifying a path to XML file, you can specify a path to USD file when calling `load_scene`:
 
     ```python
-    viewer.load_scene("/path/to/your/converted/usd")
+    # instead of passing in a path to XML, pass in a path to converted USDZ 
+    # convert XML to USDZ with any Linux system you have access to 
+    viewer.load_scene("/path/to/your/converted/scene.usdz")
     ```
 
 3. What axis convention does hand-tracking data stream use? 
