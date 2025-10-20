@@ -2,7 +2,7 @@
 
 A Python package for visualizing MuJoCo physics simulations in Augmented Reality using Apple Vision Pro and other AR devices.
 
-![assets/diagram-mjar.png](assets/diagram-mjar.png)
+![assets/diagram-mjar.png](assets/mjar-main.pdf)
 
 
 ## Installation
