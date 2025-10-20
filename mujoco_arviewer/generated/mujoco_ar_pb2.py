@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fmujoco_ar.proto\x12\tmujoco_ar\"6\n\x0eUsdzUrlRequest\x12\x10\n\x08usdz_url\x18\x01 \x01(\t\x12\x12\n\nsession_id\x18\x02 \x01(\t\"3\n\x0fUsdzUrlResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"J\n\x0fUsdzDataRequest\x12\x11\n\tusdz_data\x18\x01 \x01(\x0c\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\"\xa2\x01\n\x10UsdzChunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\x12\x13\n\x0b\x63hunk_index\x18\x04 \x01(\x05\x12\x14\n\x0ctotal_chunks\x18\x05 \x01(\x05\x12\x12\n\ntotal_size\x18\x06 \x01(\x03\x12\x15\n\ris_last_chunk\x18\x07 \x01(\x08\"M\n\x10UsdzDataResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x17\n\x0flocal_file_path\x18\x03 \x01(\t\"*\n\x07Vector3\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"8\n\nQuaternion\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\t\n\x01w\x18\x04 \x01(\x02\"l\n\x08\x42odyPose\x12$\n\x08position\x18\x01 \x01(\x0b\x32\x12.mujoco_ar.Vector3\x12\'\n\x08rotation\x18\x02 \x01(\x0b\x32\x15.mujoco_ar.Quaternion\x12\x11\n\tbody_name\x18\x03 \x01(\t\"c\n\x11PoseUpdateRequest\x12\'\n\nbody_poses\x18\x01 \x03(\x0b\x32\x13.mujoco_ar.BodyPose\x12\x12\n\nsession_id\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x01\"N\n\x12PoseUpdateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x16\n\x0e\x62odies_updated\x18\x03 \x01(\x05\"\xdb\x01\n\tMatrix4x4\x12\x0b\n\x03m00\x18\x01 \x01(\x02\x12\x0b\n\x03m01\x18\x02 \x01(\x02\x12\x0b\n\x03m02\x18\x03 \x01(\x02\x12\x0b\n\x03m03\x18\x04 \x01(\x02\x12\x0b\n\x03m10\x18\x05 \x01(\x02\x12\x0b\n\x03m11\x18\x06 \x01(\x02\x12\x0b\n\x03m12\x18\x07 \x01(\x02\x12\x0b\n\x03m13\x18\x08 \x01(\x02\x12\x0b\n\x03m20\x18\t \x01(\x02\x12\x0b\n\x03m21\x18\n \x01(\x02\x12\x0b\n\x03m22\x18\x0b \x01(\x02\x12\x0b\n\x03m23\x18\x0c \x01(\x02\x12\x0b\n\x03m30\x18\r \x01(\x02\x12\x0b\n\x03m31\x18\x0e \x01(\x02\x12\x0b\n\x03m32\x18\x0f \x01(\x02\x12\x0b\n\x03m33\x18\x10 \x01(\x02\"7\n\x08Skeleton\x12+\n\rjointMatrices\x18\x01 \x03(\x0b\x32\x14.mujoco_ar.Matrix4x4\"X\n\x04Hand\x12)\n\x0bwristMatrix\x18\x01 \x01(\x0b\x32\x14.mujoco_ar.Matrix4x4\x12%\n\x08skeleton\x18\x02 \x01(\x0b\x32\x13.mujoco_ar.Skeleton\"y\n\nHandUpdate\x12\"\n\tleft_hand\x18\x01 \x01(\x0b\x32\x0f.mujoco_ar.Hand\x12#\n\nright_hand\x18\x02 \x01(\x0b\x32\x0f.mujoco_ar.Hand\x12\"\n\x04head\x18\x03 \x01(\x0b\x32\x14.mujoco_ar.Matrix4x42\xd7\x03\n\x0fMuJoCoARService\x12\x44\n\x0bSendUsdzUrl\x12\x19.mujoco_ar.UsdzUrlRequest\x1a\x1a.mujoco_ar.UsdzUrlResponse\x12G\n\x0cSendUsdzData\x12\x1a.mujoco_ar.UsdzDataRequest\x1a\x1b.mujoco_ar.UsdzDataResponse\x12Q\n\x13SendUsdzDataChunked\x12\x1b.mujoco_ar.UsdzChunkRequest\x1a\x1b.mujoco_ar.UsdzDataResponse(\x01\x12N\n\x0bStreamPoses\x12\x1c.mujoco_ar.PoseUpdateRequest\x1a\x1d.mujoco_ar.PoseUpdateResponse(\x01\x30\x01\x12J\n\x0bUpdatePoses\x12\x1c.mujoco_ar.PoseUpdateRequest\x1a\x1d.mujoco_ar.PoseUpdateResponse\x12\x46\n\x12StreamHandTracking\x12\x15.mujoco_ar.HandUpdate\x1a\x15.mujoco_ar.HandUpdate(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fmujoco_ar.proto\x12\tmujoco_ar\"6\n\x0eUsdzUrlRequest\x12\x10\n\x08usdz_url\x18\x01 \x01(\t\x12\x12\n\nsession_id\x18\x02 \x01(\t\"3\n\x0fUsdzUrlResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\xad\x01\n\x0fUsdzDataRequest\x12\x11\n\tusdz_data\x18\x01 \x01(\x0c\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\x12.\n\x12\x61ttach_to_position\x18\x04 \x01(\x0b\x32\x12.mujoco_ar.Vector3\x12\x31\n\x12\x61ttach_to_rotation\x18\x05 \x01(\x0b\x32\x15.mujoco_ar.Quaternion\"\x85\x02\n\x10UsdzChunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x12\n\nsession_id\x18\x03 \x01(\t\x12\x13\n\x0b\x63hunk_index\x18\x04 \x01(\x05\x12\x14\n\x0ctotal_chunks\x18\x05 \x01(\x05\x12\x12\n\ntotal_size\x18\x06 \x01(\x03\x12\x15\n\ris_last_chunk\x18\x07 \x01(\x08\x12.\n\x12\x61ttach_to_position\x18\x08 \x01(\x0b\x32\x12.mujoco_ar.Vector3\x12\x31\n\x12\x61ttach_to_rotation\x18\t \x01(\x0b\x32\x15.mujoco_ar.Quaternion\"M\n\x10UsdzDataResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x17\n\x0flocal_file_path\x18\x03 \x01(\t\"*\n\x07Vector3\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"8\n\nQuaternion\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\t\n\x01w\x18\x04 \x01(\x02\"l\n\x08\x42odyPose\x12$\n\x08position\x18\x01 \x01(\x0b\x32\x12.mujoco_ar.Vector3\x12\'\n\x08rotation\x18\x02 \x01(\x0b\x32\x15.mujoco_ar.Quaternion\x12\x11\n\tbody_name\x18\x03 \x01(\t\"c\n\x11PoseUpdateRequest\x12\'\n\nbody_poses\x18\x01 \x03(\x0b\x32\x13.mujoco_ar.BodyPose\x12\x12\n\nsession_id\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x01\"N\n\x12PoseUpdateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x16\n\x0e\x62odies_updated\x18\x03 \x01(\x05\"\xdb\x01\n\tMatrix4x4\x12\x0b\n\x03m00\x18\x01 \x01(\x02\x12\x0b\n\x03m01\x18\x02 \x01(\x02\x12\x0b\n\x03m02\x18\x03 \x01(\x02\x12\x0b\n\x03m03\x18\x04 \x01(\x02\x12\x0b\n\x03m10\x18\x05 \x01(\x02\x12\x0b\n\x03m11\x18\x06 \x01(\x02\x12\x0b\n\x03m12\x18\x07 \x01(\x02\x12\x0b\n\x03m13\x18\x08 \x01(\x02\x12\x0b\n\x03m20\x18\t \x01(\x02\x12\x0b\n\x03m21\x18\n \x01(\x02\x12\x0b\n\x03m22\x18\x0b \x01(\x02\x12\x0b\n\x03m23\x18\x0c \x01(\x02\x12\x0b\n\x03m30\x18\r \x01(\x02\x12\x0b\n\x03m31\x18\x0e \x01(\x02\x12\x0b\n\x03m32\x18\x0f \x01(\x02\x12\x0b\n\x03m33\x18\x10 \x01(\x02\"<\n\x0cHandSkeleton\x12,\n\x0ejoint_matrices\x18\x01 \x03(\x0b\x32\x14.mujoco_ar.Matrix4x4\"]\n\x04Hand\x12*\n\x0cwrist_matrix\x18\x01 \x01(\x0b\x32\x14.mujoco_ar.Matrix4x4\x12)\n\x08skeleton\x18\x02 \x01(\x0b\x32\x17.mujoco_ar.HandSkeleton\"\x94\x01\n\x12HandTrackingUpdate\x12\"\n\tleft_hand\x18\x01 \x01(\x0b\x32\x0f.mujoco_ar.Hand\x12#\n\nright_hand\x18\x02 \x01(\x0b\x32\x0f.mujoco_ar.Hand\x12\"\n\x04head\x18\x03 \x01(\x0b\x32\x14.mujoco_ar.Matrix4x4\x12\x11\n\ttimestamp\x18\x04 \x01(\x01\")\n\x13HandTrackingRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t2\xe6\x03\n\x0fMuJoCoARService\x12\x44\n\x0bSendUsdzUrl\x12\x19.mujoco_ar.UsdzUrlRequest\x1a\x1a.mujoco_ar.UsdzUrlResponse\x12G\n\x0cSendUsdzData\x12\x1a.mujoco_ar.UsdzDataRequest\x1a\x1b.mujoco_ar.UsdzDataResponse\x12Q\n\x13SendUsdzDataChunked\x12\x1b.mujoco_ar.UsdzChunkRequest\x1a\x1b.mujoco_ar.UsdzDataResponse(\x01\x12N\n\x0bStreamPoses\x12\x1c.mujoco_ar.PoseUpdateRequest\x1a\x1d.mujoco_ar.PoseUpdateResponse(\x01\x30\x01\x12J\n\x0bUpdatePoses\x12\x1c.mujoco_ar.PoseUpdateRequest\x1a\x1d.mujoco_ar.PoseUpdateResponse\x12U\n\x12StreamHandTracking\x12\x1e.mujoco_ar.HandTrackingRequest\x1a\x1d.mujoco_ar.HandTrackingUpdate0\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -25,30 +25,32 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_USDZURLREQUEST']._serialized_end=84
   _globals['_USDZURLRESPONSE']._serialized_start=86
   _globals['_USDZURLRESPONSE']._serialized_end=137
-  _globals['_USDZDATAREQUEST']._serialized_start=139
-  _globals['_USDZDATAREQUEST']._serialized_end=213
-  _globals['_USDZCHUNKREQUEST']._serialized_start=216
-  _globals['_USDZCHUNKREQUEST']._serialized_end=378
-  _globals['_USDZDATARESPONSE']._serialized_start=380
-  _globals['_USDZDATARESPONSE']._serialized_end=457
-  _globals['_VECTOR3']._serialized_start=459
-  _globals['_VECTOR3']._serialized_end=501
-  _globals['_QUATERNION']._serialized_start=503
-  _globals['_QUATERNION']._serialized_end=559
-  _globals['_BODYPOSE']._serialized_start=561
-  _globals['_BODYPOSE']._serialized_end=669
-  _globals['_POSEUPDATEREQUEST']._serialized_start=671
-  _globals['_POSEUPDATEREQUEST']._serialized_end=770
-  _globals['_POSEUPDATERESPONSE']._serialized_start=772
-  _globals['_POSEUPDATERESPONSE']._serialized_end=850
-  _globals['_MATRIX4X4']._serialized_start=853
-  _globals['_MATRIX4X4']._serialized_end=1072
-  _globals['_SKELETON']._serialized_start=1074
-  _globals['_SKELETON']._serialized_end=1129
-  _globals['_HAND']._serialized_start=1131
-  _globals['_HAND']._serialized_end=1219
-  _globals['_HANDUPDATE']._serialized_start=1221
-  _globals['_HANDUPDATE']._serialized_end=1342
-  _globals['_MUJOCOARSERVICE']._serialized_start=1345
-  _globals['_MUJOCOARSERVICE']._serialized_end=1816
+  _globals['_USDZDATAREQUEST']._serialized_start=140
+  _globals['_USDZDATAREQUEST']._serialized_end=313
+  _globals['_USDZCHUNKREQUEST']._serialized_start=316
+  _globals['_USDZCHUNKREQUEST']._serialized_end=577
+  _globals['_USDZDATARESPONSE']._serialized_start=579
+  _globals['_USDZDATARESPONSE']._serialized_end=656
+  _globals['_VECTOR3']._serialized_start=658
+  _globals['_VECTOR3']._serialized_end=700
+  _globals['_QUATERNION']._serialized_start=702
+  _globals['_QUATERNION']._serialized_end=758
+  _globals['_BODYPOSE']._serialized_start=760
+  _globals['_BODYPOSE']._serialized_end=868
+  _globals['_POSEUPDATEREQUEST']._serialized_start=870
+  _globals['_POSEUPDATEREQUEST']._serialized_end=969
+  _globals['_POSEUPDATERESPONSE']._serialized_start=971
+  _globals['_POSEUPDATERESPONSE']._serialized_end=1049
+  _globals['_MATRIX4X4']._serialized_start=1052
+  _globals['_MATRIX4X4']._serialized_end=1271
+  _globals['_HANDSKELETON']._serialized_start=1273
+  _globals['_HANDSKELETON']._serialized_end=1333
+  _globals['_HAND']._serialized_start=1335
+  _globals['_HAND']._serialized_end=1428
+  _globals['_HANDTRACKINGUPDATE']._serialized_start=1431
+  _globals['_HANDTRACKINGUPDATE']._serialized_end=1579
+  _globals['_HANDTRACKINGREQUEST']._serialized_start=1581
+  _globals['_HANDTRACKINGREQUEST']._serialized_end=1622
+  _globals['_MUJOCOARSERVICE']._serialized_start=1625
+  _globals['_MUJOCOARSERVICE']._serialized_end=2111
 # @@protoc_insertion_point(module_scope)

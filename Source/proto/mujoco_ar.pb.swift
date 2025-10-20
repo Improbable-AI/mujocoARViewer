@@ -214,6 +214,154 @@ struct MujocoAr_PoseUpdateResponse: Sendable {
   init() {}
 }
 
+/// Represents a 4x4 transformation matrix
+struct MujocoAr_Matrix4x4: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var m00: Float = 0
+
+  var m01: Float = 0
+
+  var m02: Float = 0
+
+  var m03: Float = 0
+
+  var m10: Float = 0
+
+  var m11: Float = 0
+
+  var m12: Float = 0
+
+  var m13: Float = 0
+
+  var m20: Float = 0
+
+  var m21: Float = 0
+
+  var m22: Float = 0
+
+  var m23: Float = 0
+
+  var m30: Float = 0
+
+  var m31: Float = 0
+
+  var m32: Float = 0
+
+  var m33: Float = 0
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// The skeleton of a hand, comprising multiple 4x4 matrices (one per joint)
+struct MujocoAr_HandSkeleton: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Array of 4x4 matrices, expecting 25 per hand
+  var jointMatrices: [MujocoAr_Matrix4x4] = []
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
+/// The hand tracking information, including the full 4x4 matrix for the wrist and the skeleton
+struct MujocoAr_Hand: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// 4x4 matrix for the wrist position and orientation
+  var wristMatrix: MujocoAr_Matrix4x4 {
+    get {return _storage._wristMatrix ?? MujocoAr_Matrix4x4()}
+    set {_uniqueStorage()._wristMatrix = newValue}
+  }
+  /// Returns true if `wristMatrix` has been explicitly set.
+  var hasWristMatrix: Bool {return _storage._wristMatrix != nil}
+  /// Clears the value of `wristMatrix`. Subsequent reads from it will return its default value.
+  mutating func clearWristMatrix() {_uniqueStorage()._wristMatrix = nil}
+
+  /// The hand's skeleton
+  var skeleton: MujocoAr_HandSkeleton {
+    get {return _storage._skeleton ?? MujocoAr_HandSkeleton()}
+    set {_uniqueStorage()._skeleton = newValue}
+  }
+  /// Returns true if `skeleton` has been explicitly set.
+  var hasSkeleton: Bool {return _storage._skeleton != nil}
+  /// Clears the value of `skeleton`. Subsequent reads from it will return its default value.
+  mutating func clearSkeleton() {_uniqueStorage()._skeleton = nil}
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// The overall hand tracking update message, including data for both hands and head
+struct MujocoAr_HandTrackingUpdate: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var leftHand: MujocoAr_Hand {
+    get {return _storage._leftHand ?? MujocoAr_Hand()}
+    set {_uniqueStorage()._leftHand = newValue}
+  }
+  /// Returns true if `leftHand` has been explicitly set.
+  var hasLeftHand: Bool {return _storage._leftHand != nil}
+  /// Clears the value of `leftHand`. Subsequent reads from it will return its default value.
+  mutating func clearLeftHand() {_uniqueStorage()._leftHand = nil}
+
+  var rightHand: MujocoAr_Hand {
+    get {return _storage._rightHand ?? MujocoAr_Hand()}
+    set {_uniqueStorage()._rightHand = newValue}
+  }
+  /// Returns true if `rightHand` has been explicitly set.
+  var hasRightHand: Bool {return _storage._rightHand != nil}
+  /// Clears the value of `rightHand`. Subsequent reads from it will return its default value.
+  mutating func clearRightHand() {_uniqueStorage()._rightHand = nil}
+
+  var head: MujocoAr_Matrix4x4 {
+    get {return _storage._head ?? MujocoAr_Matrix4x4()}
+    set {_uniqueStorage()._head = newValue}
+  }
+  /// Returns true if `head` has been explicitly set.
+  var hasHead: Bool {return _storage._head != nil}
+  /// Clears the value of `head`. Subsequent reads from it will return its default value.
+  mutating func clearHead() {_uniqueStorage()._head = nil}
+
+  var timestamp: Double {
+    get {return _storage._timestamp}
+    set {_uniqueStorage()._timestamp = newValue}
+  }
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// Request to start hand tracking stream
+struct MujocoAr_HandTrackingRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var sessionID: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "mujoco_ar"
@@ -632,6 +780,339 @@ extension MujocoAr_PoseUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._Mes
     if lhs.success != rhs.success {return false}
     if lhs.message != rhs.message {return false}
     if lhs.bodiesUpdated != rhs.bodiesUpdated {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension MujocoAr_Matrix4x4: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".Matrix4x4"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}m00\0\u{1}m01\0\u{1}m02\0\u{1}m03\0\u{1}m10\0\u{1}m11\0\u{1}m12\0\u{1}m13\0\u{1}m20\0\u{1}m21\0\u{1}m22\0\u{1}m23\0\u{1}m30\0\u{1}m31\0\u{1}m32\0\u{1}m33\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.m00) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.m01) }()
+      case 3: try { try decoder.decodeSingularFloatField(value: &self.m02) }()
+      case 4: try { try decoder.decodeSingularFloatField(value: &self.m03) }()
+      case 5: try { try decoder.decodeSingularFloatField(value: &self.m10) }()
+      case 6: try { try decoder.decodeSingularFloatField(value: &self.m11) }()
+      case 7: try { try decoder.decodeSingularFloatField(value: &self.m12) }()
+      case 8: try { try decoder.decodeSingularFloatField(value: &self.m13) }()
+      case 9: try { try decoder.decodeSingularFloatField(value: &self.m20) }()
+      case 10: try { try decoder.decodeSingularFloatField(value: &self.m21) }()
+      case 11: try { try decoder.decodeSingularFloatField(value: &self.m22) }()
+      case 12: try { try decoder.decodeSingularFloatField(value: &self.m23) }()
+      case 13: try { try decoder.decodeSingularFloatField(value: &self.m30) }()
+      case 14: try { try decoder.decodeSingularFloatField(value: &self.m31) }()
+      case 15: try { try decoder.decodeSingularFloatField(value: &self.m32) }()
+      case 16: try { try decoder.decodeSingularFloatField(value: &self.m33) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.m00.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m00, fieldNumber: 1)
+    }
+    if self.m01.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m01, fieldNumber: 2)
+    }
+    if self.m02.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m02, fieldNumber: 3)
+    }
+    if self.m03.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m03, fieldNumber: 4)
+    }
+    if self.m10.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m10, fieldNumber: 5)
+    }
+    if self.m11.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m11, fieldNumber: 6)
+    }
+    if self.m12.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m12, fieldNumber: 7)
+    }
+    if self.m13.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m13, fieldNumber: 8)
+    }
+    if self.m20.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m20, fieldNumber: 9)
+    }
+    if self.m21.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m21, fieldNumber: 10)
+    }
+    if self.m22.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m22, fieldNumber: 11)
+    }
+    if self.m23.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m23, fieldNumber: 12)
+    }
+    if self.m30.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m30, fieldNumber: 13)
+    }
+    if self.m31.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m31, fieldNumber: 14)
+    }
+    if self.m32.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m32, fieldNumber: 15)
+    }
+    if self.m33.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.m33, fieldNumber: 16)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: MujocoAr_Matrix4x4, rhs: MujocoAr_Matrix4x4) -> Bool {
+    if lhs.m00 != rhs.m00 {return false}
+    if lhs.m01 != rhs.m01 {return false}
+    if lhs.m02 != rhs.m02 {return false}
+    if lhs.m03 != rhs.m03 {return false}
+    if lhs.m10 != rhs.m10 {return false}
+    if lhs.m11 != rhs.m11 {return false}
+    if lhs.m12 != rhs.m12 {return false}
+    if lhs.m13 != rhs.m13 {return false}
+    if lhs.m20 != rhs.m20 {return false}
+    if lhs.m21 != rhs.m21 {return false}
+    if lhs.m22 != rhs.m22 {return false}
+    if lhs.m23 != rhs.m23 {return false}
+    if lhs.m30 != rhs.m30 {return false}
+    if lhs.m31 != rhs.m31 {return false}
+    if lhs.m32 != rhs.m32 {return false}
+    if lhs.m33 != rhs.m33 {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension MujocoAr_HandSkeleton: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".HandSkeleton"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}joint_matrices\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeRepeatedMessageField(value: &self.jointMatrices) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.jointMatrices.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.jointMatrices, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: MujocoAr_HandSkeleton, rhs: MujocoAr_HandSkeleton) -> Bool {
+    if lhs.jointMatrices != rhs.jointMatrices {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".Hand"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}wrist_matrix\0\u{1}skeleton\0")
+
+  fileprivate class _StorageClass {
+    var _wristMatrix: MujocoAr_Matrix4x4? = nil
+    var _skeleton: MujocoAr_HandSkeleton? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _wristMatrix = source._wristMatrix
+      _skeleton = source._skeleton
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._wristMatrix) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._skeleton) }()
+        default: break
+        }
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      try { if let v = _storage._wristMatrix {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+      } }()
+      try { if let v = _storage._skeleton {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: MujocoAr_Hand, rhs: MujocoAr_Hand) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._wristMatrix != rhs_storage._wristMatrix {return false}
+        if _storage._skeleton != rhs_storage._skeleton {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension MujocoAr_HandTrackingUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".HandTrackingUpdate"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}left_hand\0\u{3}right_hand\0\u{1}head\0\u{1}timestamp\0")
+
+  fileprivate class _StorageClass {
+    var _leftHand: MujocoAr_Hand? = nil
+    var _rightHand: MujocoAr_Hand? = nil
+    var _head: MujocoAr_Matrix4x4? = nil
+    var _timestamp: Double = 0
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _leftHand = source._leftHand
+      _rightHand = source._rightHand
+      _head = source._head
+      _timestamp = source._timestamp
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._leftHand) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._rightHand) }()
+        case 3: try { try decoder.decodeSingularMessageField(value: &_storage._head) }()
+        case 4: try { try decoder.decodeSingularDoubleField(value: &_storage._timestamp) }()
+        default: break
+        }
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      try { if let v = _storage._leftHand {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+      } }()
+      try { if let v = _storage._rightHand {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+      try { if let v = _storage._head {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+      } }()
+      if _storage._timestamp.bitPattern != 0 {
+        try visitor.visitSingularDoubleField(value: _storage._timestamp, fieldNumber: 4)
+      }
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: MujocoAr_HandTrackingUpdate, rhs: MujocoAr_HandTrackingUpdate) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._leftHand != rhs_storage._leftHand {return false}
+        if _storage._rightHand != rhs_storage._rightHand {return false}
+        if _storage._head != rhs_storage._head {return false}
+        if _storage._timestamp != rhs_storage._timestamp {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension MujocoAr_HandTrackingRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".HandTrackingRequest"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}session_id\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.sessionID) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.sessionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.sessionID, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: MujocoAr_HandTrackingRequest, rhs: MujocoAr_HandTrackingRequest) -> Bool {
+    if lhs.sessionID != rhs.sessionID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

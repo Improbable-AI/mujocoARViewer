@@ -4,6 +4,7 @@ import GRPCNIOTransportHTTP2
 import GRPCProtobuf
 import NIOCore
 import NIOPosix
+import simd
 
 // Import the generated proto files
 // Note: Make sure the generated files are included in your Xcode target
@@ -67,9 +68,10 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         print("📋 Available methods:")
         print("   - sendUsdzUrl")
         print("   - sendUsdzData")
-        print("   - sendUsdzDataChunked (NEW!)")
+        print("   - sendUsdzDataChunked")
         print("   - updatePoses")
         print("   - streamPoses")
+        print("   - streamHandTracking (NEW!)")
     }
     
     // MARK: - Service Implementation
@@ -105,6 +107,16 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         print("📨 [sendUsdzData] Filename: \(request.filename)")
         print("📨 [sendUsdzData] Session ID: \(request.sessionID)")
         
+        // Extract attach_to information
+        var attachToPosition: SIMD3<Float>? = nil
+        var attachToRotation: simd_quatf? = nil
+        
+        if request.hasAttachToPosition && request.hasAttachToRotation {
+            attachToPosition = SIMD3<Float>(request.attachToPosition.x, request.attachToPosition.y, request.attachToPosition.z)
+            attachToRotation = simd_quatf(ix: request.attachToRotation.x, iy: request.attachToRotation.y, iz: request.attachToRotation.z, r: request.attachToRotation.w)
+            print("📨 [sendUsdzData] Attach to position: \(attachToPosition!), rotation: \(attachToRotation!)")
+        }
+        
         var response = MujocoAr_UsdzDataResponse()
         
         do {
@@ -120,10 +132,10 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
             
             print("💾 [sendUsdzData] Saved USDZ data to: \(localURL.path)")
             
-            // Update the immersive view with the local file URL
+            // Update the immersive view with the local file URL and attach_to information
             await MainActor.run {
                 print("📨 [sendUsdzData] Updating immersive view with local file...")
-                immersiveView?.updateUsdzURL(localURL.absoluteString)
+                immersiveView?.updateUsdzURL(localURL.absoluteString, attachToPosition: attachToPosition, attachToRotation: attachToRotation)
                 print("📨 [sendUsdzData] Immersive view updated")
             }
             
@@ -156,6 +168,8 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         var totalExpectedSize: Int64 = 0
         var receivedChunks = 0
         var totalChunks = 0
+        var attachToPosition: SIMD3<Float>? = nil
+        var attachToRotation: simd_quatf? = nil
         
         do {
             // Process each chunk
@@ -169,6 +183,14 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
                     sessionID = chunkRequest.sessionID
                     totalExpectedSize = chunkRequest.totalSize
                     totalChunks = Int(chunkRequest.totalChunks)
+                    
+                    // Extract attach_to information from first chunk
+                    if chunkRequest.hasAttachToPosition && chunkRequest.hasAttachToRotation {
+                        attachToPosition = SIMD3<Float>(chunkRequest.attachToPosition.x, chunkRequest.attachToPosition.y, chunkRequest.attachToPosition.z)
+                        attachToRotation = simd_quatf(ix: chunkRequest.attachToRotation.x, iy: chunkRequest.attachToRotation.y, iz: chunkRequest.attachToRotation.z, r: chunkRequest.attachToRotation.w)
+                        print("📦 [sendUsdzDataChunked] Attach to position: \(attachToPosition!), rotation: \(attachToRotation!)")
+                    }
+                    
                     print("📦 [sendUsdzDataChunked] Filename: \(fileName)")
                     print("📦 [sendUsdzDataChunked] Session ID: \(sessionID)")
                     print("📦 [sendUsdzDataChunked] Total expected size: \(totalExpectedSize) bytes")
@@ -211,10 +233,10 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
             
             print("💾 [sendUsdzDataChunked] Successfully saved complete USDZ file (\(chunkData.count) bytes)")
             
-            // Update the immersive view with the local file URL
+            // Update the immersive view with the local file URL and attach_to information
             await MainActor.run {
                 print("📦 [sendUsdzDataChunked] Updating immersive view with assembled file...")
-                immersiveView?.updateUsdzURL(localURL.absoluteString)
+                immersiveView?.updateUsdzURL(localURL.absoluteString, attachToPosition: attachToPosition, attachToRotation: attachToRotation)
                 print("📦 [sendUsdzDataChunked] Immersive view updated")
             }
             
@@ -295,4 +317,34 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
             throw error
         }
     }
+    
+    func streamHandTracking(
+        request: MujocoAr_HandTrackingRequest,
+        response: RPCWriter<MujocoAr_HandTrackingUpdate>,
+        context: ServerContext
+    ) async throws {
+        print("🖐️ [streamHandTracking] Client connected for hand tracking stream")
+        print("🖐️ [streamHandTracking] Session ID: \(request.sessionID)")
+        
+        do {
+            // Stream hand tracking data continuously
+            while !Task.isCancelled {
+                // Get the latest hand tracking data from ImmersiveView
+                if let handTrackingData = await MainActor.run(body: {
+                    return immersiveView?.getHandTrackingData()
+                }) {
+                    try await response.write(handTrackingData)
+                }
+                
+                // Stream at ~100 Hz (10ms delay)
+                try await Task.sleep(nanoseconds: 10_000_000)
+            }
+        } catch {
+            print("❌ [streamHandTracking] Error in hand tracking streaming: \(error)")
+            throw error
+        }
+        
+        print("🖐️ [streamHandTracking] Client disconnected from hand tracking stream")
+    }
 }
+

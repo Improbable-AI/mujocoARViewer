@@ -40,10 +40,10 @@ class MuJoCoARServiceStub(object):
                 request_serializer=mujoco__ar__pb2.PoseUpdateRequest.SerializeToString,
                 response_deserializer=mujoco__ar__pb2.PoseUpdateResponse.FromString,
                 )
-        self.StreamHandTracking = channel.stream_stream(
+        self.StreamHandTracking = channel.unary_stream(
                 '/mujoco_ar.MuJoCoARService/StreamHandTracking',
-                request_serializer=mujoco__ar__pb2.HandUpdate.SerializeToString,
-                response_deserializer=mujoco__ar__pb2.HandUpdate.FromString,
+                request_serializer=mujoco__ar__pb2.HandTrackingRequest.SerializeToString,
+                response_deserializer=mujoco__ar__pb2.HandTrackingUpdate.FromString,
                 )
 
 
@@ -86,8 +86,8 @@ class MuJoCoARServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamHandTracking(self, request_iterator, context):
-        """Bilateral hand tracking stream
+    def StreamHandTracking(self, request, context):
+        """Stream hand tracking data from Vision Pro
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -121,10 +121,10 @@ def add_MuJoCoARServiceServicer_to_server(servicer, server):
                     request_deserializer=mujoco__ar__pb2.PoseUpdateRequest.FromString,
                     response_serializer=mujoco__ar__pb2.PoseUpdateResponse.SerializeToString,
             ),
-            'StreamHandTracking': grpc.stream_stream_rpc_method_handler(
+            'StreamHandTracking': grpc.unary_stream_rpc_method_handler(
                     servicer.StreamHandTracking,
-                    request_deserializer=mujoco__ar__pb2.HandUpdate.FromString,
-                    response_serializer=mujoco__ar__pb2.HandUpdate.SerializeToString,
+                    request_deserializer=mujoco__ar__pb2.HandTrackingRequest.FromString,
+                    response_serializer=mujoco__ar__pb2.HandTrackingUpdate.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -223,7 +223,7 @@ class MuJoCoARService(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def StreamHandTracking(request_iterator,
+    def StreamHandTracking(request,
             target,
             options=(),
             channel_credentials=None,
@@ -233,8 +233,8 @@ class MuJoCoARService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/mujoco_ar.MuJoCoARService/StreamHandTracking',
-            mujoco__ar__pb2.HandUpdate.SerializeToString,
-            mujoco__ar__pb2.HandUpdate.FromString,
+        return grpc.experimental.unary_stream(request, target, '/mujoco_ar.MuJoCoARService/StreamHandTracking',
+            mujoco__ar__pb2.HandTrackingRequest.SerializeToString,
+            mujoco__ar__pb2.HandTrackingUpdate.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

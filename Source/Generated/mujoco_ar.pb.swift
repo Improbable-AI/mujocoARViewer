@@ -22,353 +22,344 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 }
 
 /// Request to send USDZ URL
-struct MujocoAr_UsdzUrlRequest: Sendable {
+public struct MujocoAr_UsdzUrlRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var usdzURL: String = String()
+  public var usdzURL: String = String()
 
-  var sessionID: String = String()
+  public var sessionID: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Response for USDZ URL
-struct MujocoAr_UsdzUrlResponse: Sendable {
+public struct MujocoAr_UsdzUrlResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var success: Bool = false
+  public var success: Bool = false
 
-  var message: String = String()
+  public var message: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Request to send USDZ file data
-struct MujocoAr_UsdzDataRequest: Sendable {
+public struct MujocoAr_UsdzDataRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var usdzData: Data = Data()
+  public var usdzData: Data = Data()
 
-  var filename: String = String()
+  public var filename: String = String()
 
-  var sessionID: String = String()
+  public var sessionID: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Request for chunked USDZ file transfer
-struct MujocoAr_UsdzChunkRequest: Sendable {
+public struct MujocoAr_UsdzChunkRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var chunkData: Data = Data()
+  public var chunkData: Data = Data()
 
-  var filename: String = String()
+  public var filename: String = String()
 
-  var sessionID: String = String()
+  public var sessionID: String = String()
 
-  var chunkIndex: Int32 = 0
+  public var chunkIndex: Int32 = 0
 
-  var totalChunks: Int32 = 0
+  public var totalChunks: Int32 = 0
 
-  var totalSize: Int64 = 0
+  public var totalSize: Int64 = 0
 
-  var isLastChunk: Bool = false
+  public var isLastChunk: Bool = false
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Response for USDZ data
-struct MujocoAr_UsdzDataResponse: Sendable {
+public struct MujocoAr_UsdzDataResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var success: Bool = false
+  public var success: Bool = false
 
-  var message: String = String()
+  public var message: String = String()
 
-  var localFilePath: String = String()
+  public var localFilePath: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// 3D Vector for position
-struct MujocoAr_Vector3: Sendable {
+public struct MujocoAr_Vector3: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var x: Float = 0
+  public var x: Float = 0
 
-  var y: Float = 0
+  public var y: Float = 0
 
-  var z: Float = 0
+  public var z: Float = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Quaternion for rotation
-struct MujocoAr_Quaternion: Sendable {
+public struct MujocoAr_Quaternion: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var x: Float = 0
+  public var x: Float = 0
 
-  var y: Float = 0
+  public var y: Float = 0
 
-  var z: Float = 0
+  public var z: Float = 0
 
-  var w: Float = 0
+  public var w: Float = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Body pose containing position and rotation
-struct MujocoAr_BodyPose: Sendable {
+public struct MujocoAr_BodyPose: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var position: MujocoAr_Vector3 {
+  public var position: MujocoAr_Vector3 {
     get {return _position ?? MujocoAr_Vector3()}
     set {_position = newValue}
   }
   /// Returns true if `position` has been explicitly set.
-  var hasPosition: Bool {return self._position != nil}
+  public var hasPosition: Bool {return self._position != nil}
   /// Clears the value of `position`. Subsequent reads from it will return its default value.
-  mutating func clearPosition() {self._position = nil}
+  public mutating func clearPosition() {self._position = nil}
 
-  var rotation: MujocoAr_Quaternion {
+  public var rotation: MujocoAr_Quaternion {
     get {return _rotation ?? MujocoAr_Quaternion()}
     set {_rotation = newValue}
   }
   /// Returns true if `rotation` has been explicitly set.
-  var hasRotation: Bool {return self._rotation != nil}
+  public var hasRotation: Bool {return self._rotation != nil}
   /// Clears the value of `rotation`. Subsequent reads from it will return its default value.
-  mutating func clearRotation() {self._rotation = nil}
+  public mutating func clearRotation() {self._rotation = nil}
 
-  var bodyName: String = String()
+  public var bodyName: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 
   fileprivate var _position: MujocoAr_Vector3? = nil
   fileprivate var _rotation: MujocoAr_Quaternion? = nil
 }
 
 /// Request containing multiple body poses
-struct MujocoAr_PoseUpdateRequest: Sendable {
+public struct MujocoAr_PoseUpdateRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var bodyPoses: [MujocoAr_BodyPose] = []
+  public var bodyPoses: [MujocoAr_BodyPose] = []
 
-  var sessionID: String = String()
+  public var sessionID: String = String()
 
-  var timestamp: Double = 0
+  public var timestamp: Double = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Response for pose updates
-struct MujocoAr_PoseUpdateResponse: Sendable {
+public struct MujocoAr_PoseUpdateResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var success: Bool = false
+  public var success: Bool = false
 
-  var message: String = String()
+  public var message: String = String()
 
-  var bodiesUpdated: Int32 = 0
+  public var bodiesUpdated: Int32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-/// Represents a 4x4 transformation matrix for a joint
-struct MujocoAr_Matrix4x4: Sendable {
+/// Represents a 4x4 transformation matrix
+public struct MujocoAr_Matrix4x4: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var m00: Float = 0
+  public var m00: Float = 0
 
-  var m01: Float = 0
+  public var m01: Float = 0
 
-  var m02: Float = 0
+  public var m02: Float = 0
 
-  var m03: Float = 0
+  public var m03: Float = 0
 
-  var m10: Float = 0
+  public var m10: Float = 0
 
-  var m11: Float = 0
+  public var m11: Float = 0
 
-  var m12: Float = 0
+  public var m12: Float = 0
 
-  var m13: Float = 0
+  public var m13: Float = 0
 
-  var m20: Float = 0
+  public var m20: Float = 0
 
-  var m21: Float = 0
+  public var m21: Float = 0
 
-  var m22: Float = 0
+  public var m22: Float = 0
 
-  var m23: Float = 0
+  public var m23: Float = 0
 
-  var m30: Float = 0
+  public var m30: Float = 0
 
-  var m31: Float = 0
+  public var m31: Float = 0
 
-  var m32: Float = 0
+  public var m32: Float = 0
 
-  var m33: Float = 0
+  public var m33: Float = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// The skeleton of a hand, comprising multiple 4x4 matrices (one per joint)
-struct MujocoAr_Skeleton: Sendable {
+public struct MujocoAr_HandSkeleton: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Array of 4x4 matrices, expecting 25 per hand
-  var jointMatrices: [MujocoAr_Matrix4x4] = []
+  public var jointMatrices: [MujocoAr_Matrix4x4] = []
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// The hand tracking information, including the full 4x4 matrix for the wrist and the skeleton
-struct MujocoAr_Hand: @unchecked Sendable {
+public struct MujocoAr_Hand: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// 4x4 matrix for the wrist position and orientation
-  var wristMatrix: MujocoAr_Matrix4x4 {
+  public var wristMatrix: MujocoAr_Matrix4x4 {
     get {return _storage._wristMatrix ?? MujocoAr_Matrix4x4()}
     set {_uniqueStorage()._wristMatrix = newValue}
   }
   /// Returns true if `wristMatrix` has been explicitly set.
-  var hasWristMatrix: Bool {return _storage._wristMatrix != nil}
+  public var hasWristMatrix: Bool {return _storage._wristMatrix != nil}
   /// Clears the value of `wristMatrix`. Subsequent reads from it will return its default value.
-  mutating func clearWristMatrix() {_uniqueStorage()._wristMatrix = nil}
+  public mutating func clearWristMatrix() {_uniqueStorage()._wristMatrix = nil}
 
   /// The hand's skeleton
-  var skeleton: MujocoAr_Skeleton {
-    get {return _storage._skeleton ?? MujocoAr_Skeleton()}
+  public var skeleton: MujocoAr_HandSkeleton {
+    get {return _storage._skeleton ?? MujocoAr_HandSkeleton()}
     set {_uniqueStorage()._skeleton = newValue}
   }
   /// Returns true if `skeleton` has been explicitly set.
-  var hasSkeleton: Bool {return _storage._skeleton != nil}
+  public var hasSkeleton: Bool {return _storage._skeleton != nil}
   /// Clears the value of `skeleton`. Subsequent reads from it will return its default value.
-  mutating func clearSkeleton() {_uniqueStorage()._skeleton = nil}
+  public mutating func clearSkeleton() {_uniqueStorage()._skeleton = nil}
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 
   fileprivate var _storage = _StorageClass.defaultInstance
 }
 
-/// The overall hand update message, including data for both hands
-struct MujocoAr_HandUpdate: @unchecked Sendable {
+/// The overall hand tracking update message, including data for both hands and head
+public struct MujocoAr_HandTrackingUpdate: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var leftHand: MujocoAr_Hand {
+  public var leftHand: MujocoAr_Hand {
     get {return _storage._leftHand ?? MujocoAr_Hand()}
     set {_uniqueStorage()._leftHand = newValue}
   }
   /// Returns true if `leftHand` has been explicitly set.
-  var hasLeftHand: Bool {return _storage._leftHand != nil}
+  public var hasLeftHand: Bool {return _storage._leftHand != nil}
   /// Clears the value of `leftHand`. Subsequent reads from it will return its default value.
-  mutating func clearLeftHand() {_uniqueStorage()._leftHand = nil}
+  public mutating func clearLeftHand() {_uniqueStorage()._leftHand = nil}
 
-  var rightHand: MujocoAr_Hand {
+  public var rightHand: MujocoAr_Hand {
     get {return _storage._rightHand ?? MujocoAr_Hand()}
     set {_uniqueStorage()._rightHand = newValue}
   }
   /// Returns true if `rightHand` has been explicitly set.
-  var hasRightHand: Bool {return _storage._rightHand != nil}
+  public var hasRightHand: Bool {return _storage._rightHand != nil}
   /// Clears the value of `rightHand`. Subsequent reads from it will return its default value.
-  mutating func clearRightHand() {_uniqueStorage()._rightHand = nil}
+  public mutating func clearRightHand() {_uniqueStorage()._rightHand = nil}
 
-  var head: MujocoAr_Matrix4x4 {
+  public var head: MujocoAr_Matrix4x4 {
     get {return _storage._head ?? MujocoAr_Matrix4x4()}
     set {_uniqueStorage()._head = newValue}
   }
   /// Returns true if `head` has been explicitly set.
-  var hasHead: Bool {return _storage._head != nil}
+  public var hasHead: Bool {return _storage._head != nil}
   /// Clears the value of `head`. Subsequent reads from it will return its default value.
-  mutating func clearHead() {_uniqueStorage()._head = nil}
+  public mutating func clearHead() {_uniqueStorage()._head = nil}
 
-  var timestamp: Double {
+  public var timestamp: Double {
     get {return _storage._timestamp}
     set {_uniqueStorage()._timestamp = newValue}
   }
 
-  var sessionID: String {
-    get {return _storage._sessionID}
-    set {_uniqueStorage()._sessionID = newValue}
-  }
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
+  public init() {}
 
   fileprivate var _storage = _StorageClass.defaultInstance
 }
 
-/// Response message for hand updates
-struct MujocoAr_HandUpdateResponse: Sendable {
+/// Request to start hand tracking stream
+public struct MujocoAr_HandTrackingRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var success: Bool = false
+  public var sessionID: String = String()
 
-  var message: String = String()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  var timestamp: Double = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
+  public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -376,10 +367,10 @@ struct MujocoAr_HandUpdateResponse: Sendable {
 fileprivate let _protobuf_package = "mujoco_ar"
 
 extension MujocoAr_UsdzUrlRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".UsdzUrlRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}usdz_url\0\u{3}session_id\0")
+  public static let protoMessageName: String = _protobuf_package + ".UsdzUrlRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}usdz_url\0\u{3}session_id\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -392,7 +383,7 @@ extension MujocoAr_UsdzUrlRequest: SwiftProtobuf.Message, SwiftProtobuf._Message
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.usdzURL.isEmpty {
       try visitor.visitSingularStringField(value: self.usdzURL, fieldNumber: 1)
     }
@@ -402,7 +393,7 @@ extension MujocoAr_UsdzUrlRequest: SwiftProtobuf.Message, SwiftProtobuf._Message
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_UsdzUrlRequest, rhs: MujocoAr_UsdzUrlRequest) -> Bool {
+  public static func ==(lhs: MujocoAr_UsdzUrlRequest, rhs: MujocoAr_UsdzUrlRequest) -> Bool {
     if lhs.usdzURL != rhs.usdzURL {return false}
     if lhs.sessionID != rhs.sessionID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -411,10 +402,10 @@ extension MujocoAr_UsdzUrlRequest: SwiftProtobuf.Message, SwiftProtobuf._Message
 }
 
 extension MujocoAr_UsdzUrlResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".UsdzUrlResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0")
+  public static let protoMessageName: String = _protobuf_package + ".UsdzUrlResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -427,7 +418,7 @@ extension MujocoAr_UsdzUrlResponse: SwiftProtobuf.Message, SwiftProtobuf._Messag
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -437,7 +428,7 @@ extension MujocoAr_UsdzUrlResponse: SwiftProtobuf.Message, SwiftProtobuf._Messag
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_UsdzUrlResponse, rhs: MujocoAr_UsdzUrlResponse) -> Bool {
+  public static func ==(lhs: MujocoAr_UsdzUrlResponse, rhs: MujocoAr_UsdzUrlResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.message != rhs.message {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -446,10 +437,10 @@ extension MujocoAr_UsdzUrlResponse: SwiftProtobuf.Message, SwiftProtobuf._Messag
 }
 
 extension MujocoAr_UsdzDataRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".UsdzDataRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}usdz_data\0\u{1}filename\0\u{3}session_id\0")
+  public static let protoMessageName: String = _protobuf_package + ".UsdzDataRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}usdz_data\0\u{1}filename\0\u{3}session_id\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -463,7 +454,7 @@ extension MujocoAr_UsdzDataRequest: SwiftProtobuf.Message, SwiftProtobuf._Messag
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.usdzData.isEmpty {
       try visitor.visitSingularBytesField(value: self.usdzData, fieldNumber: 1)
     }
@@ -476,7 +467,7 @@ extension MujocoAr_UsdzDataRequest: SwiftProtobuf.Message, SwiftProtobuf._Messag
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_UsdzDataRequest, rhs: MujocoAr_UsdzDataRequest) -> Bool {
+  public static func ==(lhs: MujocoAr_UsdzDataRequest, rhs: MujocoAr_UsdzDataRequest) -> Bool {
     if lhs.usdzData != rhs.usdzData {return false}
     if lhs.filename != rhs.filename {return false}
     if lhs.sessionID != rhs.sessionID {return false}
@@ -486,10 +477,10 @@ extension MujocoAr_UsdzDataRequest: SwiftProtobuf.Message, SwiftProtobuf._Messag
 }
 
 extension MujocoAr_UsdzChunkRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".UsdzChunkRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}chunk_data\0\u{1}filename\0\u{3}session_id\0\u{3}chunk_index\0\u{3}total_chunks\0\u{3}total_size\0\u{3}is_last_chunk\0")
+  public static let protoMessageName: String = _protobuf_package + ".UsdzChunkRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}chunk_data\0\u{1}filename\0\u{3}session_id\0\u{3}chunk_index\0\u{3}total_chunks\0\u{3}total_size\0\u{3}is_last_chunk\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -507,7 +498,7 @@ extension MujocoAr_UsdzChunkRequest: SwiftProtobuf.Message, SwiftProtobuf._Messa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.chunkData.isEmpty {
       try visitor.visitSingularBytesField(value: self.chunkData, fieldNumber: 1)
     }
@@ -532,7 +523,7 @@ extension MujocoAr_UsdzChunkRequest: SwiftProtobuf.Message, SwiftProtobuf._Messa
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_UsdzChunkRequest, rhs: MujocoAr_UsdzChunkRequest) -> Bool {
+  public static func ==(lhs: MujocoAr_UsdzChunkRequest, rhs: MujocoAr_UsdzChunkRequest) -> Bool {
     if lhs.chunkData != rhs.chunkData {return false}
     if lhs.filename != rhs.filename {return false}
     if lhs.sessionID != rhs.sessionID {return false}
@@ -546,10 +537,10 @@ extension MujocoAr_UsdzChunkRequest: SwiftProtobuf.Message, SwiftProtobuf._Messa
 }
 
 extension MujocoAr_UsdzDataResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".UsdzDataResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}local_file_path\0")
+  public static let protoMessageName: String = _protobuf_package + ".UsdzDataResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}local_file_path\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -563,7 +554,7 @@ extension MujocoAr_UsdzDataResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -576,7 +567,7 @@ extension MujocoAr_UsdzDataResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_UsdzDataResponse, rhs: MujocoAr_UsdzDataResponse) -> Bool {
+  public static func ==(lhs: MujocoAr_UsdzDataResponse, rhs: MujocoAr_UsdzDataResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.message != rhs.message {return false}
     if lhs.localFilePath != rhs.localFilePath {return false}
@@ -586,10 +577,10 @@ extension MujocoAr_UsdzDataResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
 }
 
 extension MujocoAr_Vector3: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Vector3"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}z\0")
+  public static let protoMessageName: String = _protobuf_package + ".Vector3"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}z\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -603,7 +594,7 @@ extension MujocoAr_Vector3: SwiftProtobuf.Message, SwiftProtobuf._MessageImpleme
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.x.bitPattern != 0 {
       try visitor.visitSingularFloatField(value: self.x, fieldNumber: 1)
     }
@@ -616,7 +607,7 @@ extension MujocoAr_Vector3: SwiftProtobuf.Message, SwiftProtobuf._MessageImpleme
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_Vector3, rhs: MujocoAr_Vector3) -> Bool {
+  public static func ==(lhs: MujocoAr_Vector3, rhs: MujocoAr_Vector3) -> Bool {
     if lhs.x != rhs.x {return false}
     if lhs.y != rhs.y {return false}
     if lhs.z != rhs.z {return false}
@@ -626,10 +617,10 @@ extension MujocoAr_Vector3: SwiftProtobuf.Message, SwiftProtobuf._MessageImpleme
 }
 
 extension MujocoAr_Quaternion: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Quaternion"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}z\0\u{1}w\0")
+  public static let protoMessageName: String = _protobuf_package + ".Quaternion"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}x\0\u{1}y\0\u{1}z\0\u{1}w\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -644,7 +635,7 @@ extension MujocoAr_Quaternion: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.x.bitPattern != 0 {
       try visitor.visitSingularFloatField(value: self.x, fieldNumber: 1)
     }
@@ -660,7 +651,7 @@ extension MujocoAr_Quaternion: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_Quaternion, rhs: MujocoAr_Quaternion) -> Bool {
+  public static func ==(lhs: MujocoAr_Quaternion, rhs: MujocoAr_Quaternion) -> Bool {
     if lhs.x != rhs.x {return false}
     if lhs.y != rhs.y {return false}
     if lhs.z != rhs.z {return false}
@@ -671,10 +662,10 @@ extension MujocoAr_Quaternion: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
 }
 
 extension MujocoAr_BodyPose: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".BodyPose"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}rotation\0\u{3}body_name\0")
+  public static let protoMessageName: String = _protobuf_package + ".BodyPose"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}position\0\u{1}rotation\0\u{3}body_name\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -688,7 +679,7 @@ extension MujocoAr_BodyPose: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     // The use of inline closures is to circumvent an issue where the compiler
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
@@ -705,7 +696,7 @@ extension MujocoAr_BodyPose: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_BodyPose, rhs: MujocoAr_BodyPose) -> Bool {
+  public static func ==(lhs: MujocoAr_BodyPose, rhs: MujocoAr_BodyPose) -> Bool {
     if lhs._position != rhs._position {return false}
     if lhs._rotation != rhs._rotation {return false}
     if lhs.bodyName != rhs.bodyName {return false}
@@ -715,10 +706,10 @@ extension MujocoAr_BodyPose: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
 }
 
 extension MujocoAr_PoseUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".PoseUpdateRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}body_poses\0\u{3}session_id\0\u{1}timestamp\0")
+  public static let protoMessageName: String = _protobuf_package + ".PoseUpdateRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}body_poses\0\u{3}session_id\0\u{1}timestamp\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -732,7 +723,7 @@ extension MujocoAr_PoseUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._Mess
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.bodyPoses.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.bodyPoses, fieldNumber: 1)
     }
@@ -745,7 +736,7 @@ extension MujocoAr_PoseUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._Mess
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_PoseUpdateRequest, rhs: MujocoAr_PoseUpdateRequest) -> Bool {
+  public static func ==(lhs: MujocoAr_PoseUpdateRequest, rhs: MujocoAr_PoseUpdateRequest) -> Bool {
     if lhs.bodyPoses != rhs.bodyPoses {return false}
     if lhs.sessionID != rhs.sessionID {return false}
     if lhs.timestamp != rhs.timestamp {return false}
@@ -755,10 +746,10 @@ extension MujocoAr_PoseUpdateRequest: SwiftProtobuf.Message, SwiftProtobuf._Mess
 }
 
 extension MujocoAr_PoseUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".PoseUpdateResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}bodies_updated\0")
+  public static let protoMessageName: String = _protobuf_package + ".PoseUpdateResponse"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}bodies_updated\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -772,7 +763,7 @@ extension MujocoAr_PoseUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._Mes
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.success != false {
       try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
     }
@@ -785,7 +776,7 @@ extension MujocoAr_PoseUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._Mes
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_PoseUpdateResponse, rhs: MujocoAr_PoseUpdateResponse) -> Bool {
+  public static func ==(lhs: MujocoAr_PoseUpdateResponse, rhs: MujocoAr_PoseUpdateResponse) -> Bool {
     if lhs.success != rhs.success {return false}
     if lhs.message != rhs.message {return false}
     if lhs.bodiesUpdated != rhs.bodiesUpdated {return false}
@@ -795,10 +786,10 @@ extension MujocoAr_PoseUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._Mes
 }
 
 extension MujocoAr_Matrix4x4: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Matrix4x4"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}m00\0\u{1}m01\0\u{1}m02\0\u{1}m03\0\u{1}m10\0\u{1}m11\0\u{1}m12\0\u{1}m13\0\u{1}m20\0\u{1}m21\0\u{1}m22\0\u{1}m23\0\u{1}m30\0\u{1}m31\0\u{1}m32\0\u{1}m33\0")
+  public static let protoMessageName: String = _protobuf_package + ".Matrix4x4"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}m00\0\u{1}m01\0\u{1}m02\0\u{1}m03\0\u{1}m10\0\u{1}m11\0\u{1}m12\0\u{1}m13\0\u{1}m20\0\u{1}m21\0\u{1}m22\0\u{1}m23\0\u{1}m30\0\u{1}m31\0\u{1}m32\0\u{1}m33\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -825,7 +816,7 @@ extension MujocoAr_Matrix4x4: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.m00.bitPattern != 0 {
       try visitor.visitSingularFloatField(value: self.m00, fieldNumber: 1)
     }
@@ -877,7 +868,7 @@ extension MujocoAr_Matrix4x4: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_Matrix4x4, rhs: MujocoAr_Matrix4x4) -> Bool {
+  public static func ==(lhs: MujocoAr_Matrix4x4, rhs: MujocoAr_Matrix4x4) -> Bool {
     if lhs.m00 != rhs.m00 {return false}
     if lhs.m01 != rhs.m01 {return false}
     if lhs.m02 != rhs.m02 {return false}
@@ -899,11 +890,11 @@ extension MujocoAr_Matrix4x4: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   }
 }
 
-extension MujocoAr_Skeleton: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Skeleton"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}joint_matrices\0")
+extension MujocoAr_HandSkeleton: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".HandSkeleton"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}joint_matrices\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -915,14 +906,14 @@ extension MujocoAr_Skeleton: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.jointMatrices.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.jointMatrices, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_Skeleton, rhs: MujocoAr_Skeleton) -> Bool {
+  public static func ==(lhs: MujocoAr_HandSkeleton, rhs: MujocoAr_HandSkeleton) -> Bool {
     if lhs.jointMatrices != rhs.jointMatrices {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -930,12 +921,12 @@ extension MujocoAr_Skeleton: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
 }
 
 extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Hand"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}wrist_matrix\0\u{1}skeleton\0")
+  public static let protoMessageName: String = _protobuf_package + ".Hand"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}wrist_matrix\0\u{1}skeleton\0")
 
   fileprivate class _StorageClass {
     var _wristMatrix: MujocoAr_Matrix4x4? = nil
-    var _skeleton: MujocoAr_Skeleton? = nil
+    var _skeleton: MujocoAr_HandSkeleton? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -958,7 +949,7 @@ extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
     return _storage
   }
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     _ = _uniqueStorage()
     try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
       while let fieldNumber = try decoder.nextFieldNumber() {
@@ -974,7 +965,7 @@ extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every if/case branch local when no optimizations
@@ -990,7 +981,7 @@ extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_Hand, rhs: MujocoAr_Hand) -> Bool {
+  public static func ==(lhs: MujocoAr_Hand, rhs: MujocoAr_Hand) -> Bool {
     if lhs._storage !== rhs._storage {
       let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
         let _storage = _args.0
@@ -1006,16 +997,15 @@ extension MujocoAr_Hand: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
   }
 }
 
-extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".HandUpdate"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}left_hand\0\u{3}right_hand\0\u{1}head\0\u{1}timestamp\0\u{3}session_id\0")
+extension MujocoAr_HandTrackingUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".HandTrackingUpdate"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}left_hand\0\u{3}right_hand\0\u{1}head\0\u{1}timestamp\0")
 
   fileprivate class _StorageClass {
     var _leftHand: MujocoAr_Hand? = nil
     var _rightHand: MujocoAr_Hand? = nil
     var _head: MujocoAr_Matrix4x4? = nil
     var _timestamp: Double = 0
-    var _sessionID: String = String()
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -1030,7 +1020,6 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
       _rightHand = source._rightHand
       _head = source._head
       _timestamp = source._timestamp
-      _sessionID = source._sessionID
     }
   }
 
@@ -1041,7 +1030,7 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
     return _storage
   }
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     _ = _uniqueStorage()
     try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
       while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1053,14 +1042,13 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
         case 2: try { try decoder.decodeSingularMessageField(value: &_storage._rightHand) }()
         case 3: try { try decoder.decodeSingularMessageField(value: &_storage._head) }()
         case 4: try { try decoder.decodeSingularDoubleField(value: &_storage._timestamp) }()
-        case 5: try { try decoder.decodeSingularStringField(value: &_storage._sessionID) }()
         default: break
         }
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every if/case branch local when no optimizations
@@ -1078,14 +1066,11 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
       if _storage._timestamp.bitPattern != 0 {
         try visitor.visitSingularDoubleField(value: _storage._timestamp, fieldNumber: 4)
       }
-      if !_storage._sessionID.isEmpty {
-        try visitor.visitSingularStringField(value: _storage._sessionID, fieldNumber: 5)
-      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_HandUpdate, rhs: MujocoAr_HandUpdate) -> Bool {
+  public static func ==(lhs: MujocoAr_HandTrackingUpdate, rhs: MujocoAr_HandTrackingUpdate) -> Bool {
     if lhs._storage !== rhs._storage {
       let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
         let _storage = _args.0
@@ -1094,7 +1079,6 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
         if _storage._rightHand != rhs_storage._rightHand {return false}
         if _storage._head != rhs_storage._head {return false}
         if _storage._timestamp != rhs_storage._timestamp {return false}
-        if _storage._sessionID != rhs_storage._sessionID {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -1104,41 +1088,31 @@ extension MujocoAr_HandUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
   }
 }
 
-extension MujocoAr_HandUpdateResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".HandUpdateResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}timestamp\0")
+extension MujocoAr_HandTrackingRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".HandTrackingRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}session_id\0")
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBoolField(value: &self.success) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.message) }()
-      case 3: try { try decoder.decodeSingularDoubleField(value: &self.timestamp) }()
+      case 1: try { try decoder.decodeSingularStringField(value: &self.sessionID) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.success != false {
-      try visitor.visitSingularBoolField(value: self.success, fieldNumber: 1)
-    }
-    if !self.message.isEmpty {
-      try visitor.visitSingularStringField(value: self.message, fieldNumber: 2)
-    }
-    if self.timestamp.bitPattern != 0 {
-      try visitor.visitSingularDoubleField(value: self.timestamp, fieldNumber: 3)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.sessionID.isEmpty {
+      try visitor.visitSingularStringField(value: self.sessionID, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: MujocoAr_HandUpdateResponse, rhs: MujocoAr_HandUpdateResponse) -> Bool {
-    if lhs.success != rhs.success {return false}
-    if lhs.message != rhs.message {return false}
-    if lhs.timestamp != rhs.timestamp {return false}
+  public static func ==(lhs: MujocoAr_HandTrackingRequest, rhs: MujocoAr_HandTrackingRequest) -> Bool {
+    if lhs.sessionID != rhs.sessionID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

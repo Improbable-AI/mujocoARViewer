@@ -150,6 +150,17 @@ struct ImmersiveView: View {
     @State private var statusEntity: Entity?
     @State private var realityContent: RealityViewContent?
     @State private var inputPort: String = "50051"
+    
+    // Model attachment offset state (ZUP coordinates)
+    @State private var attachToPosition: SIMD3<Float>? = nil
+    @State private var attachToRotation: simd_quatf? = nil
+    
+    // Hand tracking state
+    @State private var handTrackingData: MujocoAr_HandTrackingUpdate = MujocoAr_HandTrackingUpdate()
+    @State private var arkitSession = ARKitSession()
+    @State private var handTracking = HandTrackingProvider()
+    @State private var worldTracking = WorldTrackingProvider()
+    
     let spatialGen = SpatialGenHelper()
     
 
@@ -276,6 +287,9 @@ struct ImmersiveView: View {
             // Just initialize network info, don't start server automatically
             networkManager.updateNetworkInfo()
             
+            // Start hand tracking
+            await startHandTracking()
+            
             // Legacy TCP server (can be removed once gRPC is working)
             // server.startListening()
         }
@@ -359,7 +373,7 @@ struct ImmersiveView: View {
         
         // Position the status display in the upper right of the user's field of view
         // Offset it so it's not directly in front of their face
-        statusContainer.setPosition([0.4, 0.3, -0.8], relativeTo: headAnchor)
+        statusContainer.setPosition([0.0, 0.1, -0.8], relativeTo: headAnchor)
         
         // Add the container to the head anchor
         headAnchor.addChild(statusContainer)
@@ -377,8 +391,18 @@ struct ImmersiveView: View {
     }
     
     // MARK: - gRPC Integration Methods
-    func updateUsdzURL(_ url: String) {
+    func updateUsdzURL(_ url: String, attachToPosition: SIMD3<Float>? = nil, attachToRotation: simd_quatf? = nil) {
         print("🔄 [updateUsdzURL] Called with URL: \(url)")
+        
+        // Store the attach_to offset
+        self.attachToPosition = attachToPosition
+        self.attachToRotation = attachToRotation
+        
+        if let position = attachToPosition, let rotation = attachToRotation {
+            print("📍 [updateUsdzURL] Attach to position: \(position), rotation: \(rotation)")
+        } else {
+            print("📍 [updateUsdzURL] No attach_to offset specified, using origin")
+        }
         
         // Update connection status to show client activity
         networkManager.updateConnectionStatus("Client Connected - USDZ Received")
@@ -431,17 +455,33 @@ struct ImmersiveView: View {
             let mjPos = SIMD3<Float>(pose.position.x, pose.position.y, pose.position.z)
             let mjRot = simd_quatf(ix: pose.rotation.x, iy: pose.rotation.y, iz: pose.rotation.z, r: pose.rotation.w)
 
-            // Convert from MuJoCo (Z-up) to RealityKit (Y-up)
-            let rkRot = axisCorrection * mjRot
-            let rkPos = axisCorrection.act(mjPos)
+            // Build MuJoCo world-space transform (still in ZUP)
+            var mjWorldTransform = matrix_identity_float4x4
+            mjWorldTransform = simd_mul(matrix_float4x4(mjRot), mjWorldTransform)
+            mjWorldTransform.columns.3 = SIMD4<Float>(mjPos, 1.0)
             
-//            let rkRot = mjRot
-//            let rkPos = mjPos
-
-            // Build world-space transform from MuJoCo pose
-            var worldTransform = matrix_identity_float4x4
-            worldTransform = simd_mul(matrix_float4x4(rkRot), worldTransform)
-            worldTransform.columns.3 = SIMD4<Float>(rkPos, 1.0)
+            // Apply attach_to offset BEFORE axis correction (both in ZUP coordinates)
+            if let attachPos = attachToPosition, let attachRot = attachToRotation {
+                // Create attach_to transform matrix (in ZUP)
+                var attachTransform = matrix_identity_float4x4
+                attachTransform = simd_mul(matrix_float4x4(attachRot), attachTransform)
+                attachTransform.columns.3 = SIMD4<Float>(attachPos, 1.0)
+                
+                // Apply attach_to offset: attach_to_transform * mujoco_transform (both in ZUP)
+                mjWorldTransform = simd_mul(attachTransform, mjWorldTransform)
+                
+                print("🔗 [updatePoses] Applied attach_to offset for '\(bodyName)' in ZUP coordinates")
+            }
+            
+            // Now convert the combined transform from ZUP to RealityKit YUP
+            let rkPos = axisCorrection.act(SIMD3<Float>(mjWorldTransform.columns.3.x, mjWorldTransform.columns.3.y, mjWorldTransform.columns.3.z))
+            let mjRotFromMatrix = simd_quatf(mjWorldTransform)
+            let rkRot = axisCorrection * mjRotFromMatrix
+            
+            // Build final RealityKit world transform
+            var rkWorldTransform = matrix_identity_float4x4
+            rkWorldTransform = simd_mul(matrix_float4x4(rkRot), rkWorldTransform)
+            rkWorldTransform.columns.3 = SIMD4<Float>(rkPos, 1.0)
             
             // Retrieve the initial local transform offset (geometry alignment)
             let localOffset = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
@@ -449,8 +489,8 @@ struct ImmersiveView: View {
             // define inverse of local Offset
             let invlocalOffset = localOffset.inverse
 
-            // Combine: MuJoCo world * local offset
-            let finalTransform = simd_mul(worldTransform, invlocalOffset)
+            // Combine: RealityKit_world * local_offset
+            let finalTransform = simd_mul(rkWorldTransform, invlocalOffset)
 
             bodyEntity.setTransformMatrix(finalTransform, relativeTo: nil)
         }
@@ -472,6 +512,9 @@ struct ImmersiveView: View {
             entity = nil
             bodyEntities.removeAll()
             initialLocalTransforms.removeAll()
+            
+            // Note: attachToPosition and attachToRotation are preserved from the send_model call
+            // They are only reset when explicitly sending a new model without attach_to
 
             // --- Load new model ---
             print("📦 Loading USDZ from \(url.absoluteString)")
@@ -539,11 +582,143 @@ struct ImmersiveView: View {
         print("📝 Indexed \(bodyEntities.count) entities with cached local transforms")
     }
     
-    private func setupInteraction(for model: ModelEntity) {
-        let bounds = model.model?.mesh.bounds.extents ?? .one
-        model.components.set(CollisionComponent(shapes: [.generateBox(size: bounds)]))
-        model.components.set(HoverEffectComponent())
-        model.components.set(InputTargetComponent())
-//        model.components.physics
+    
+    // MARK: - Hand Tracking Methods
+    
+    func getHandTrackingData() -> MujocoAr_HandTrackingUpdate {
+        return handTrackingData
+    }
+    
+    private func startHandTracking() async {
+        print("🖐️ [startHandTracking] Initializing hand tracking...")
+        
+        do {
+            if HandTrackingProvider.isSupported {
+                print("🖐️ [startHandTracking] Hand tracking is supported")
+                try await arkitSession.run([handTracking, worldTracking])
+                print("🖐️ [startHandTracking] ARKit session started")
+                
+                // Start processing hand updates
+                Task {
+                    await processHandUpdates()
+                }
+            } else {
+                print("⚠️ [startHandTracking] Hand tracking not supported on this device")
+            }
+        } catch {
+            print("❌ [startHandTracking] Failed to start hand tracking: \(error)")
+        }
+    }
+    
+    private func processHandUpdates() async {
+        print("🖐️ [processHandUpdates] Starting hand tracking update loop")
+        
+        for await update in handTracking.anchorUpdates {
+            let handAnchor = update.anchor
+            print("processHandUpdates is running.")
+            
+            guard handAnchor.isTracked else { continue }
+            
+            switch handAnchor.chirality {
+            case .left:
+                DispatchQueue.main.async {
+                    self.updateLeftHandData(handAnchor: handAnchor)
+                }
+            case .right:
+                DispatchQueue.main.async {
+                    self.updateRightHandData(handAnchor: handAnchor)
+                }
+            @unknown default:
+                break
+            }
+        }
+    }
+    
+    private func updateLeftHandData(handAnchor: HandAnchor) {
+        // Update wrist transform
+        handTrackingData.leftHand.wristMatrix = convertToMatrix4x4(handAnchor.originFromAnchorTransform)
+        print(handAnchor.originFromAnchorTransform)
+        
+        // Define the joint types in the specific order
+        let jointTypes: [HandSkeleton.JointName] = [
+            .wrist,
+            .thumbKnuckle, .thumbIntermediateBase, .thumbIntermediateTip, .thumbTip,
+            .indexFingerMetacarpal, .indexFingerKnuckle, .indexFingerIntermediateBase, .indexFingerIntermediateTip, .indexFingerTip,
+            .middleFingerMetacarpal, .middleFingerKnuckle, .middleFingerIntermediateBase, .middleFingerIntermediateTip, .middleFingerTip,
+            .ringFingerMetacarpal, .ringFingerKnuckle, .ringFingerIntermediateBase, .ringFingerIntermediateTip, .ringFingerTip,
+            .littleFingerMetacarpal, .littleFingerKnuckle, .littleFingerIntermediateBase, .littleFingerIntermediateTip, .littleFingerTip,
+        ]
+        
+        // Clear and rebuild joint matrices
+        handTrackingData.leftHand.skeleton.jointMatrices.removeAll()
+        
+        for (index, jointType) in jointTypes.enumerated() {
+            guard let joint = handAnchor.handSkeleton?.joint(jointType), joint.isTracked else {
+                // Add identity matrix for missing joints to maintain index consistency
+                handTrackingData.leftHand.skeleton.jointMatrices.append(convertToMatrix4x4(matrix_identity_float4x4))
+                continue
+            }
+            handTrackingData.leftHand.skeleton.jointMatrices.append(convertToMatrix4x4(joint.anchorFromJointTransform))
+        }
+        
+        // Update timestamp
+        handTrackingData.timestamp = Date().timeIntervalSince1970
+        print("Updated left hand skeleton")
+    }
+    
+    private func updateRightHandData(handAnchor: HandAnchor) {
+        // Update wrist transform
+        handTrackingData.rightHand.wristMatrix = convertToMatrix4x4(handAnchor.originFromAnchorTransform)
+        print(handAnchor.originFromAnchorTransform)
+        
+        // Define the joint types in the specific order
+        let jointTypes: [HandSkeleton.JointName] = [
+            .wrist,
+            .thumbKnuckle, .thumbIntermediateBase, .thumbIntermediateTip, .thumbTip,
+            .indexFingerMetacarpal, .indexFingerKnuckle, .indexFingerIntermediateBase, .indexFingerIntermediateTip, .indexFingerTip,
+            .middleFingerMetacarpal, .middleFingerKnuckle, .middleFingerIntermediateBase, .middleFingerIntermediateTip, .middleFingerTip,
+            .ringFingerMetacarpal, .ringFingerKnuckle, .ringFingerIntermediateBase, .ringFingerIntermediateTip, .ringFingerTip,
+            .littleFingerMetacarpal, .littleFingerKnuckle, .littleFingerIntermediateBase, .littleFingerIntermediateTip, .littleFingerTip,
+        ]
+        
+        // Clear and rebuild joint matrices
+        handTrackingData.rightHand.skeleton.jointMatrices.removeAll()
+        
+        for (index, jointType) in jointTypes.enumerated() {
+            guard let joint = handAnchor.handSkeleton?.joint(jointType), joint.isTracked else {
+                // Add identity matrix for missing joints to maintain index consistency
+                handTrackingData.rightHand.skeleton.jointMatrices.append(convertToMatrix4x4(matrix_identity_float4x4))
+                continue
+            }
+            print(index)
+            handTrackingData.rightHand.skeleton.jointMatrices.append(convertToMatrix4x4(joint.anchorFromJointTransform))
+        }
+        
+        // Update timestamp
+        handTrackingData.timestamp = Date().timeIntervalSince1970
+        print("Updated right hand skeleton")
+    }
+    
+    private func convertToMatrix4x4(_ matrix: simd_float4x4) -> MujocoAr_Matrix4x4 {
+        var result = MujocoAr_Matrix4x4()
+        // Correct matrix layout - columns should be accessed properly
+        result.m00 = matrix.columns.0.x
+        result.m01 = matrix.columns.1.x
+        result.m02 = matrix.columns.2.x
+        result.m03 = matrix.columns.3.x
+        result.m10 = matrix.columns.0.y
+        result.m11 = matrix.columns.1.y
+        result.m12 = matrix.columns.2.y
+        result.m13 = matrix.columns.3.y
+        result.m20 = matrix.columns.0.z
+        result.m21 = matrix.columns.1.z
+        result.m22 = matrix.columns.2.z
+        result.m23 = matrix.columns.3.z
+        result.m30 = matrix.columns.0.w
+        result.m31 = matrix.columns.1.w
+        result.m32 = matrix.columns.2.w
+        result.m33 = matrix.columns.3.w
+        return result
     }
 }
+
