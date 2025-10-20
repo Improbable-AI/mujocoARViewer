@@ -20,8 +20,6 @@ pip install "mujoco-ar-viewer[usd]"
 ```
 
 
-
-
 ### VisionOS App 
 
 Open App Store on VisionOS, and search for [mujocoARViewer]. 
@@ -62,7 +60,9 @@ while True:
     viewer.sync()
 ```
 
-## Where to attach your mujoco `world` frame 
+## Recommended Read  
+
+### Where to attach your mujoco `world` frame 
 
 
 Since this is a viewer in augmented reality (which by defintion, blends your simulated environment with your real world environment), deciding where to attach your simulation scene's `world` frame in your actual physical space in real world is important. You can determine this by passing in `attach_to` as an argument either by 
@@ -80,19 +80,30 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
 
 
 
-| Examples | [Unitree G1 XML](https://github.com/google-deepmind/mujoco_menagerie/tree/main/unitree_g1/scene.xml) | [Google Robot](https://github.com/google-deepmind/mujoco_menagerie/tree/main/google_robot/scene.xml) | [ALOHA 2](https://github.com/google-deepmind/mujoco_menagerie/blob/main/aloha/scene.xml) |
+| Examples from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) | [Unitree G1 XML](https://github.com/google-deepmind/mujoco_menagerie/tree/main/unitree_g1/scene.xml) | [Google Robot XML](https://github.com/google-deepmind/mujoco_menagerie/tree/main/google_robot/scene.xml) | [ALOHA 2 XML](https://github.com/google-deepmind/mujoco_menagerie/blob/main/aloha/scene.xml) |
 |-------|---------|----------|----------|
-| Pictures | ![](assets/unitree_g1.png)  | ![](assets/google_robot.png)     | ![](assets/aloha2.png)     |
-| MuJoCo `world` frame | `world` frame is attached on a "ground".     | `world` frame is attached on a "ground".     | `world` frame is attached on a "table".     |
+| Visualization of `world` frame | ![](assets/unitree_g1.png)  | ![](assets/google_robot.png)     | ![](assets/aloha2.png)     |
+|  | `world` frame is attached on a "ground".     | `world` frame is attached on a "ground".     | `world` frame is attached on a "table".     |
 | Recommended `attach_to` | Default Setting    | Default Setting     | Offset in `z-axis`, that can bring up the table surface to reasonable height in your real world.    |
 
 
-## USD Conversion 
+## FAQ 
 
+1. Why did you develop this package? 
 
+    Collecting robot demonstrations in simulation is often useful and necessary for conducting research on robot learning pipelines. However, if you try to do that by watching a 2D viewer of a simulation scene on a 2D monitor, you quickly run into limitations since you really have no accurate perception of depth. Presenting a simulation scene as an AR environment offers a nice solution. Consider this as a **3D-lifted version of your existing 2D `mujoco.viewer`.** 
 
-## Hand-Tracking Info 
+2. Why is USD conversion only supported on Linux and Windows, and how should I use this for macOS then? 
 
+    Limited macOS compatibility for automatic XML-to-USD conversion comes from [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter), which internally relies on [OpenUSD Exchange SDK](https://github.com/NVIDIA-Omniverse/usd-exchange) which only supports Linux and Windows at this moment. For now, if you want to use this software on macOS, you can separately convert your XML into USD using [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter) and bring the USD file over to macOS. Then, you instead of specifying a path to XML file, you can specify a path to USD file when calling `load_scene`:
+
+    ```python
+    viewer.load_scene("/path/to/your/converted/usd")
+    ```
+
+3. What axis convention does hand-tracking data stream use? 
+
+    It uses the one defined in [VisionProTeleop](https://github.com/Improbable-AI/VisionProTeleop). 
 
 
 
