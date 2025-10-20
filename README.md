@@ -13,17 +13,18 @@ A Python package for visualizing MuJoCo physics simulations in Augmented Reality
 pip install mujoco-ar-viewer
 ```
 
-To use automatic MuJoCo XML-to-USD conversion feature (supported only on Linux and Windows via ), use: 
+To use automatic MuJoCo XML-to-USD conversion feature (supported only on Linux and Windows via [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter) from project [Newton](https://github.com/newton-physics)), use: 
 
 ```bash 
 pip install "mujoco-ar-viewer[usd]"
 ```
 
-Note that 
+
+
 
 ### VisionOS App 
 
-...
+Open App Store on VisionOS, and search for [mujocoARViewer]. 
 
 ## Quick Start
 
@@ -60,6 +61,40 @@ while True:
     # Sync with AR device
     viewer.sync()
 ```
+
+## Where to attach your mujoco `world` frame 
+
+
+Since this is a viewer in augmented reality (which by defintion, blends your simulated environment with your real world environment), deciding where to attach your simulation scene's `world` frame in your actual physical space in real world is important. You can determine this by passing in `attach_to` as an argument either by 
+1. a 7-dim vector of `xyz` translation and scalar-first quaternion representation (i.e., `[x,y,z,qw,qx,qy,qz]`)
+2. a 4-dim vector of `xyz` translation and rotation around `z-axis`, specified as a degree. (i.e., `[x,y,z,zrot]`)
+
+```python 
+# attach the `world` frame 0.3m above the visionOS origin, rotating 90 degrees around z-axis. 
+viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90]) 
+```
+
+1. **Default Setting**: When `viewer.load_scene` is called without `attach_to` specified, it attahces the simualtion scene to the origin frame registered inside VisionOS. VisionOS automatically detects the physical ground of your surrounding using its sensors and defines the origin on the ground. For instance, if you're standing, visionOS will attach origin frame right below your feet. If you're sitting down, it's gonna be right below your chair. For most *humanoid/Quadruped Locomotion* scenes or *mobile manipulation* scenes, for instance, the world frame is often defined on a surface that can be considered as a "ground". Then you don't need no offset, at least for the `z-axis`. Based on your use cases, you might still want to some offset for `x` and `y` translation, or rotation around `z-axis`. 
+
+2. **Custom Setting**: For many other cases, you might want to define a custom position to attach the `world` frame of a simulation scene. For most **Table-top Manipulation Scenes**, for instance, if your XML file is designed for table-top manipulation using fixed-base manipulators with your world frame defined on the surface of the table, you might want to attach the `world` frame with a slight `z-axis` offset in your AR environment. 
+
+
+
+| Examples | [Unitree G1 XML](https://github.com/google-deepmind/mujoco_menagerie/tree/main/unitree_g1/scene.xml) | [Google Robot](https://github.com/google-deepmind/mujoco_menagerie/tree/main/google_robot/scene.xml) | [ALOHA 2](https://github.com/google-deepmind/mujoco_menagerie/blob/main/aloha/scene.xml) |
+|-------|---------|----------|----------|
+| Pictures | ![](assets/unitree_g1.png)  | ![](assets/google_robot.png)     | ![](assets/aloha2.png)     |
+| MuJoCo `world` frame | `world` frame is attached on a "ground".     | `world` frame is attached on a "ground".     | `world` frame is attached on a "table".     |
+| Recommended `attach_to` | Default Setting    | Default Setting     | Offset in `z-axis`, that can bring up the table surface to reasonable height in your real world.    |
+
+
+## USD Conversion 
+
+
+
+## Hand-Tracking Info 
+
+
+
 
 ## License
 

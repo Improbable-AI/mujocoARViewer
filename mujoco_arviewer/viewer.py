@@ -140,6 +140,17 @@ class MJARViewer:
         else: 
             usdz_path = model_path
 
+        # if attach_to is 4 dim 
+        if len(attach_to) == 4: 
+            # assume it's [x,y,z, rotation around z in degrees], convert to quaternion
+            yaw_deg = attach_to[3]
+            yaw_rad = np.radians(yaw_deg / 2)
+            qw = np.cos(yaw_rad)
+            qx = 0.0
+            qy = 0.0
+            qz = np.sin(yaw_rad)
+            attach_to = [attach_to[0], attach_to[1], attach_to[2], qw, qx, qy, qz]
+
         self._send_usdz_data(usdz_path, attach_to=attach_to)
 
     def send_model(self, model_path, attach_to=None):

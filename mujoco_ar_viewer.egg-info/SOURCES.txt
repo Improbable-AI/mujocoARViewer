@@ -1,0 +1,15 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+requirements.txt
+mujoco_ar_viewer.egg-info/PKG-INFO
+mujoco_ar_viewer.egg-info/SOURCES.txt
+mujoco_ar_viewer.egg-info/dependency_links.txt
+mujoco_ar_viewer.egg-info/requires.txt
+mujoco_ar_viewer.egg-info/top_level.txt
+mujoco_arviewer/__init__.py
+mujoco_arviewer/viewer.py
+mujoco_arviewer/generated/__init__.py
+mujoco_arviewer/generated/mujoco_ar_pb2.py
+mujoco_arviewer/generated/mujoco_ar_pb2_grpc.py
