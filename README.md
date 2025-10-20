@@ -105,7 +105,10 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
 
 3. What axis convention does hand-tracking data stream use? 
 
-    It uses the one defined in [VisionProTeleop](https://github.com/Improbable-AI/VisionProTeleop). 
+    It uses the convention defined in [VisionProTeleop](https://github.com/Improbable-AI/VisionProTeleop). 
+
+    ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/axis_convention.png)
+    ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/hand_skeleton_convention.png) 
 
 
 
