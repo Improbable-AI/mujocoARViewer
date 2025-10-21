@@ -147,6 +147,11 @@ struct ImmersiveView: View {
     @State private var bodyEntities: [String: ModelEntity] = [:]
     @State private var usdzURL: String? = nil
     @State private var initialLocalTransforms: [String: Transform] = [:]
+    // Cached 1:1 mapping from Python body names -> Swift RealityKit entity names
+    @State private var pythonToSwiftNameMap: [String: String] = [:]
+    @State private var nameMappingInitialized: Bool = false
+    // Cached 1:N mapping: Python body name -> multiple Swift entity target names to move together
+    @State private var pythonToSwiftTargets: [String: [String]] = [:]
     @State private var statusEntity: Entity?
     @State private var realityContent: RealityViewContent?
     @State private var inputPort: String = "50051"
@@ -533,9 +538,14 @@ struct ImmersiveView: View {
             guard let entity = bodyEntities[name], let desiredWorld = transforms[name] else { continue }
 
             if applyInWorldSpace {
-                // Apply directly in world (ground) space. Because we update parents first, the
-                // computed local transform RealityKit derives will yield the exact desired world.
+                // Use full world transform to place the entity precisely, then restore local scale
+                let prevLocalScale = entity.scale
                 entity.setTransformMatrix(desiredWorld, relativeTo: nil)
+                if let parent = entity.parent {
+                    entity.setScale(prevLocalScale, relativeTo: parent)
+                } else {
+                    entity.setScale(prevLocalScale, relativeTo: nil)
+                }
                 appliedWorld[name] = desiredWorld
             } else {
                 // Determine parent world to compute local matrix
@@ -554,7 +564,16 @@ struct ImmersiveView: View {
 
                 // Convert world -> local relative to parent
                 let localMatrix = simd_mul(parentWorld.inverse, desiredWorld)
+
+                // Apply full local transform for precision, then restore local scale
+                let prevLocalScale = entity.scale
                 entity.setTransformMatrix(localMatrix, relativeTo: parentEntity)
+                if let parent = parentEntity {
+                    entity.setScale(prevLocalScale, relativeTo: parent)
+                } else {
+                    entity.setScale(prevLocalScale, relativeTo: nil)
+                }
+
                 appliedWorld[name] = desiredWorld
             }
         }
@@ -562,58 +581,130 @@ struct ImmersiveView: View {
     
     // Helper method to compute final transforms (called from gRPC)
     func computeFinalTransforms(_ poses: [String: MujocoAr_BodyPose]) -> [String: simd_float4x4] {
+        // If entities aren't indexed yet, skip until ready to prevent bad mappings
+        guard !bodyEntities.isEmpty, !initialLocalTransforms.isEmpty else {
+            print("⏳ Entities not fully indexed yet; deferring pose application")
+            return [:]
+        }
+
+        // Ensure name mapping is initialized once per model (only when entities exist)
+        if !nameMappingInitialized {
+            let pythonNames = Array(poses.keys)
+            initializeNameMapping(pythonNames: pythonNames)
+            // Only mark initialized if at least one mapping points to an existing entity
+            let validMatches = pythonNames.reduce(0) { acc, py in
+                if let swift = pythonToSwiftNameMap[py], bodyEntities[swift] != nil { return acc + 1 }
+                return acc
+            }
+            if validMatches > 0 { nameMappingInitialized = true }
+        }
+
+        // Build expanded mapping to multiple Swift targets per python body when available
+        func targets(for pyName: String) -> [String] {
+            if let cached = pythonToSwiftTargets[pyName], !cached.isEmpty {
+                return cached
+            }
+            // Derive from 1:1 map or find best
+            var baseName: String? = pythonToSwiftNameMap[pyName]
+            if baseName == nil || baseName!.isEmpty || bodyEntities[baseName!] == nil {
+                if let best = findBestSwiftMatch(for: pyName) {
+                    pythonToSwiftNameMap[pyName] = best
+                    baseName = best
+                }
+            }
+            guard let base = baseName, let baseEntity = bodyEntities[base] else {
+                print("⚠️ [mapping] No base match for Python body '\(pyName)' — skipping multi-target mapping")
+                return []
+            }
+            // Compute co-move targets: any ModelEntity whose parent name == base and that has zero children (leaf nodes),
+            // regardless of where that parent instance sits in the RealityKit hierarchy. This accounts for wrapper insertion.
+            var result: [String] = []
+            for model in bodyEntities.values {
+                if model.parent?.name == base && model.children.isEmpty {
+                    result.append(model.name)
+                }
+            }
+            pythonToSwiftTargets[pyName] = result
+            let targetsList = result.joined(separator: ", ")
+            print("🎯 [mapping] Python '\(pyName)' → Swift leafs with parent='\(base)' [\(targetsList)]")
+            return result
+        }
+
         let axisCorrection = simd_quatf(angle: -.pi / 2, axis: SIMD3<Float>(1, 0, 0)) // Z-up → Y-up
         var finalTransforms: [String: simd_float4x4] = [:]
 
-        for (bodyName, pose) in poses {
-            // Only compute transforms for bodies that exist
-            guard initialLocalTransforms[bodyName] != nil else {
-                print("⚠️ Body '\(bodyName)' not found in initialLocalTransforms, skipping")
+        for (pyName, pose) in poses {
+            let targetNames = targets(for: pyName)
+            if targetNames.isEmpty {
+                // Fall back to attempting pyName directly
+                let single = pythonToSwiftNameMap[pyName] ?? pyName
+                let names = [single]
+                for bodyName in names {
+                    guard initialLocalTransforms[bodyName] != nil else {
+                        print("⚠️ Body '\(bodyName)' not found in initialLocalTransforms, skipping")
+                        continue
+                    }
+                    // Compute final transform for this target using same pose
+                    let computed = computeFinalTransformForTarget(bodyName: bodyName, pose: pose,
+                                                                  axisCorrection: axisCorrection)
+                    finalTransforms[bodyName] = computed
+                }
                 continue
             }
-
-            let mjPos = SIMD3<Float>(pose.position.x, pose.position.y, pose.position.z)
-            let mjRot = simd_quatf(ix: pose.rotation.x, iy: pose.rotation.y, iz: pose.rotation.z, r: pose.rotation.w)
-
-            // Build MuJoCo world-space transform (still in ZUP)
-            var mjWorldTransform = matrix_identity_float4x4
-            mjWorldTransform = simd_mul(matrix_float4x4(mjRot), mjWorldTransform)
-            mjWorldTransform.columns.3 = SIMD4<Float>(mjPos, 1.0)
-            
-            // Apply attach_to offset BEFORE axis correction (both in ZUP coordinates)
-            if let attachPos = attachToPosition, let attachRot = attachToRotation {
-                // Create attach_to transform matrix (in ZUP)
-                var attachTransform = matrix_identity_float4x4
-                attachTransform = simd_mul(matrix_float4x4(attachRot), attachTransform)
-                attachTransform.columns.3 = SIMD4<Float>(attachPos, 1.0)
-                
-                // Apply attach_to offset: attach_to_transform * mujoco_transform (both in ZUP)
-                mjWorldTransform = simd_mul(attachTransform, mjWorldTransform)
+            for bodyName in targetNames {
+                // Only compute transforms for targets that exist
+                guard initialLocalTransforms[bodyName] != nil else {
+                    print("⚠️ Body '\(bodyName)' not found in initialLocalTransforms, skipping")
+                    continue
+                }
+                let computed = computeFinalTransformForTarget(bodyName: bodyName, pose: pose,
+                                                              axisCorrection: axisCorrection)
+                finalTransforms[bodyName] = computed
             }
-            
-            // Now convert the combined transform from ZUP to RealityKit YUP
-            let rkPos = axisCorrection.act(SIMD3<Float>(mjWorldTransform.columns.3.x, mjWorldTransform.columns.3.y, mjWorldTransform.columns.3.z))
-            let mjRotFromMatrix = simd_quatf(mjWorldTransform)
-            let rkRot = axisCorrection * mjRotFromMatrix
-            
-            // Build final RealityKit world transform
-            var rkWorldTransform = matrix_identity_float4x4
-            rkWorldTransform = simd_mul(matrix_float4x4(rkRot), rkWorldTransform)
-            rkWorldTransform.columns.3 = SIMD4<Float>(rkPos, 1.0)
-            
-            // Retrieve the initial local transform offset (geometry alignment)
-            let localOffset = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
-            
-            // define inverse of local Offset
-            let invlocalOffset = localOffset.inverse
 
-            // Combine: RealityKit_world * local_offset
-            let finalTransform = simd_mul(rkWorldTransform, invlocalOffset)
-            
-            finalTransforms[bodyName] = finalTransform
+            // per-target transforms already handled above
         }
         
         return finalTransforms
+    }
+
+    // Compute the final transform for a specific target name, using that target's local offset
+    private func computeFinalTransformForTarget(bodyName: String,
+                                                pose: MujocoAr_BodyPose,
+                                                axisCorrection: simd_quatf) -> simd_float4x4 {
+        let mjPos = SIMD3<Float>(pose.position.x, pose.position.y, pose.position.z)
+        let mjRot = simd_quatf(ix: pose.rotation.x, iy: pose.rotation.y, iz: pose.rotation.z, r: pose.rotation.w)
+
+        // Build MuJoCo world-space transform (ZUP)
+        var mjWorldTransform = matrix_identity_float4x4
+        mjWorldTransform = simd_mul(matrix_float4x4(mjRot), mjWorldTransform)
+        mjWorldTransform.columns.3 = SIMD4<Float>(mjPos, 1.0)
+
+        // Apply attach_to offset BEFORE axis correction (ZUP)
+        if let attachPos = attachToPosition, let attachRot = attachToRotation {
+            var attachTransform = matrix_identity_float4x4
+            attachTransform = simd_mul(matrix_float4x4(attachRot), attachTransform)
+            attachTransform.columns.3 = SIMD4<Float>(attachPos, 1.0)
+            mjWorldTransform = simd_mul(attachTransform, mjWorldTransform)
+        }
+
+        // Convert ZUP -> YUP
+        let rkPos = axisCorrection.act(SIMD3<Float>(mjWorldTransform.columns.3.x, mjWorldTransform.columns.3.y, mjWorldTransform.columns.3.z))
+        let mjRotFromMatrix = simd_quatf(mjWorldTransform)
+        let rkRot = axisCorrection * mjRotFromMatrix
+
+        // Build final RealityKit world transform
+        var rkWorldTransform = matrix_identity_float4x4
+        rkWorldTransform = simd_mul(matrix_float4x4(rkRot), rkWorldTransform)
+        rkWorldTransform.columns.3 = SIMD4<Float>(rkPos, 1.0)
+
+        // Target-specific local offset
+        let localOffset = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
+        let invlocalOffset = localOffset.inverse
+
+        // Combine
+        let finalTransform = simd_mul(rkWorldTransform, invlocalOffset)
+        return finalTransform
     }
     
     private func loadUsdzModel(from url: URL) async {
@@ -632,6 +723,9 @@ struct ImmersiveView: View {
             entity = nil
             bodyEntities.removeAll()
             initialLocalTransforms.removeAll()
+            pythonToSwiftNameMap.removeAll()
+            nameMappingInitialized = false
+            pythonToSwiftTargets.removeAll()
             
             // Note: attachToPosition and attachToRotation are preserved from the send_model call
             // They are only reset when explicitly sending a new model without attach_to
@@ -666,31 +760,153 @@ struct ImmersiveView: View {
             print("❌ Failed to load USDZ: \(error)")
         }
     }
+
+    // MARK: - Name Mapping (Python -> Swift)
+    private func initializeNameMapping(pythonNames: [String]) {
+        // Build a 1:1 mapping based on substring containment with minimal length difference
+        // Use sanitized, lowercase comparisons; store actual Swift names in the map
+        let swiftNames = Array(bodyEntities.keys)
+        let sanitizedSwiftPairs: [(original: String, sanitized: String)] = swiftNames.map { ($0, sanitizeName($0)) }
+        var usedSwift: Set<String> = []
+
+        func bestMatch(for pyName: String) -> String? {
+            return findBestSwiftMatch(for: pyName, sanitizedSwiftPairs: sanitizedSwiftPairs, excluding: usedSwift)
+        }
+
+        var newMap: [String: String] = [:]
+        for py in pythonNames {
+            if let match = bestMatch(for: py) {
+                newMap[py] = match
+                usedSwift.insert(match)
+            } else {
+                // No containment match found; leave unmapped for fallback/direct use
+                newMap[py] = py
+            }
+        }
+
+        pythonToSwiftNameMap = newMap
+
+        // Log summary
+        print("🔤 Built name mapping (Python → Swift):")
+        for (k, v) in newMap.sorted(by: { $0.key < $1.key }) {
+            print("   \(k)  →  \(v)")
+        }
+    }
+
+    private func sanitizeName(_ s: String) -> String {
+        let lowered = s.lowercased()
+        let filtered = lowered.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
+        return String(String.UnicodeScalarView(filtered))
+    }
+
+    // Reusable best-match finder (contains + minimal delta). When sanitized pairs provided, uses them; else builds from bodyEntities.
+    private func findBestSwiftMatch(for pyName: String,
+                                    sanitizedSwiftPairs: [(original: String, sanitized: String)]? = nil,
+                                    excluding used: Set<String> = []) -> String? {
+        let pairs: [(original: String, sanitized: String)]
+        if let provided = sanitizedSwiftPairs {
+            pairs = provided
+        } else {
+            let swiftNames = Array(bodyEntities.keys)
+            pairs = swiftNames.map { ($0, sanitizeName($0)) }
+        }
+
+        let pySan = sanitizeName(pyName)
+        var best: (swiftOriginal: String, delta: Int)? = nil
+        for (orig, san) in pairs where !used.contains(orig) {
+            if san.contains(pySan) {
+                let delta = max(0, san.count - pySan.count)
+                if let current = best {
+                    if delta < current.delta || (delta == current.delta && orig.count < current.swiftOriginal.count) {
+                        best = (orig, delta)
+                    }
+                } else {
+                    best = (orig, delta)
+                }
+            }
+        }
+        return best?.swiftOriginal
+    }
+    
+    // Build a human-readable scene hierarchy string for saving/logging
+    private func sceneHierarchyString(from root: Entity) -> String {
+        var lines: [String] = []
+        func walk(_ entity: Entity, depth: Int) {
+            let indent = String(repeating: "  ", count: depth)
+            let name = entity.name.isEmpty ? "<unnamed>" : entity.name
+            let comps = entity.components.count
+            let childCount = entity.children.count
+            lines.append("\(indent)- \(name) [components: \(comps), children: \(childCount)]")
+            for child in entity.children {
+                walk(child, depth: depth + 1)
+            }
+        }
+        walk(root, depth: 0)
+        return lines.joined(separator: "\n")
+    }
     
     
     private func indexBodyEntities(_ rootEntity: Entity) {
         bodyEntities.removeAll()
-        initialLocalTransforms.removeAll()
+        initialLocalTransforms.removeAll() 
         print("🔍 [indexBodyEntities] Starting recursive indexing...")
+
+        func entityDepth(_ entity: Entity) -> Int {
+            var d = 0
+            var p = entity.parent
+            while let parent = p {
+                d += 1
+                p = parent.parent
+            }
+            return d
+        }
+
+        func printHierarchy(from entity: Entity, depth: Int = 0) {
+            let indent = String(repeating: "  ", count: depth)
+            let typeLabel = (entity as? ModelEntity) != nil ? "Model" : "Node"
+            let parentName = entity.parent?.name ?? "(root)"
+            print("📂 \(indent)- [\(typeLabel)] '\(entity.name)' parent='\(parentName)' children=\(entity.children.count)")
+            for child in entity.children {
+                printHierarchy(from: child, depth: depth + 1)
+            }
+        }
 
         func indexChildren(_ entity: Entity) {
             if !entity.name.isEmpty {
                 if let modelEntity = entity as? ModelEntity {
                     bodyEntities[entity.name] = modelEntity
                     initialLocalTransforms[entity.name] = modelEntity.transform
-                    print("✅ Added ModelEntity: '\(entity.name)'")
+                    let parentName = modelEntity.parent?.name ?? "(root)"
+                    let depth = entityDepth(modelEntity)
+                    print("📎 [hier] \(String(repeating: "  ", count: depth))- [Model] '\(entity.name)' parent='\(parentName)' children=\(modelEntity.children.count)")
+                    print("✅ Added ModelEntity: '\(entity.name)' \(entity.scale)")
                 } else {
+                    // Insert a wrapper to ensure we can drive transforms
                     let wrapper = ModelEntity()
                     wrapper.name = entity.name
-                    wrapper.transform = entity.transform   // preserve local transform
+                    // Preserve local TR first; scale will be applied with setScale after parenting
+                    wrapper.transform = entity.transform
+
+                    // Preserve the original local scale and apply using setScale relative to parent
+                    let preservedScale = entity.scale
+
+                    let originalParentName = entity.parent?.name ?? "(root)"
                     if let parent = entity.parent {
                         parent.addChild(wrapper)
                         entity.removeFromParent()
                         wrapper.addChild(entity)
+                        // Apply scale relative to its new parent so RealityKit honors it in the hierarchy
+//                        wrapper.setScale(preservedScale, relativeTo: parent)
+                    } else {
+                        // No parent: fall back to setting local scale directly
+                        wrapper.scale = preservedScale
                     }
+
                     bodyEntities[wrapper.name] = wrapper
                     initialLocalTransforms[wrapper.name] = wrapper.transform
-                    print("✅ Added wrapper: '\(wrapper.name)' (cached local offset)")
+                    let depth = entityDepth(wrapper)
+                    print("📎 [hier] \(String(repeating: "  ", count: depth))- [Wrapper] '\(wrapper.name)' inserted between parent='\(originalParentName)' and child='\(entity.name)'")
+                    print("✅ Added wrapper: '\(wrapper.name)' (cached local offset) \(wrapper.scale)")
                 }
             }
             for child in entity.children {
@@ -700,6 +916,23 @@ struct ImmersiveView: View {
 
         indexChildren(rootEntity)
         print("📝 Indexed \(bodyEntities.count) entities with cached local transforms")
+        print("📑 Scene Hierarchy:")
+        printHierarchy(from: rootEntity, depth: 0)
+
+        // Build and save the scene hierarchy to a file
+        let hierarchyText = sceneHierarchyString(from: rootEntity)
+        let formatter = ISO8601DateFormatter()
+        var timestamp = formatter.string(from: Date())
+        // Make filename-safe
+        timestamp = timestamp.replacingOccurrences(of: ":", with: "-")
+        let filename = "SceneHierarchy-\(timestamp).txt"
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        do {
+            try hierarchyText.write(to: fileURL, atomically: true, encoding: .utf8)
+            print("💾 Scene hierarchy saved to: \(fileURL.path)")
+        } catch {
+            print("❌ Failed to save scene hierarchy: \(error)")
+        }
     }
     
     
