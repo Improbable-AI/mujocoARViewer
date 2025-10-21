@@ -5,5 +5,4 @@ numpy>=1.24.0
 protobuf>=4.24.0
 
 [usd]
-mujoco-usd-converter>=0.2.0
-usd-core>=23.11
+mujoco-usd-converter

@@ -9,6 +9,7 @@ import gzip
 import tempfile
 from pathlib import Path
 import numpy as np
+from copy import deepcopy
 # Import generated gRPC classes
 from .generated import mujoco_ar_pb2, mujoco_ar_pb2_grpc
 
@@ -94,11 +95,21 @@ class MJARViewer:
         self.hand_tracking_thread = None
         self.hand_tracking_running = False
         
+        # Pose streaming state
+        self.pose_streaming_enabled = False
+        self.pose_stream_thread = None
+        self.current_poses = {}
+        self.pose_stream_running = False
+        self.pose_stream_lock = threading.Lock()
+        
         self._setup_grpc_client()
         
         # Auto-start hand tracking if enabled
         if self.enable_hand_tracking:
             self.start_hand_tracking()
+            
+        # Auto-start pose streaming
+        self.start_pose_streaming()
         
     def _setup_grpc_client(self):
         """Setup gRPC client connection"""
@@ -396,9 +407,11 @@ class MJARViewer:
         """
         body_dict = {}
         for body_name, body_id in self.bodies.items(): 
-            xpos = self.data.body(body_id).xpos.tolist()
-            xquat = self.data.body(body_id).xquat.tolist()
-            body_dict[body_name] = {
+            xpos = deepcopy(self.data.body(body_id).xpos.tolist())
+            xquat = deepcopy(self.data.body(body_id).xquat.tolist())
+            # Remove slashes from body name when storing in dictionary
+            clean_body_name = body_name.replace('/', '').replace('-', '') if body_name else body_name
+            body_dict[clean_body_name] = {
                 "xpos": xpos, 
                 "xquat": xquat
             }
@@ -406,54 +419,112 @@ class MJARViewer:
     
     
     def sync(self): 
-
+        """Update the current poses that will be sent via the streaming connection"""
         try:
             poses = self.get_poses()
-            body_poses = []
             
-            for body_name, pose_data in poses.items():
-                if body_name:  # Skip empty body names
-                    # Create protobuf objects
-                    position = mujoco_ar_pb2.Vector3(
-                        x=pose_data["xpos"][0],
-                        y=pose_data["xpos"][1], 
-                        z=pose_data["xpos"][2]
-                    )
-                    
-                    rotation = mujoco_ar_pb2.Quaternion(
-                        x=pose_data["xquat"][1],  # Note: MuJoCo uses w,x,y,z order
-                        y=pose_data["xquat"][2],
-                        z=pose_data["xquat"][3],
-                        w=pose_data["xquat"][0]   # w comes first in MuJoCo
-                    )
-                    
-                    body_pose = mujoco_ar_pb2.BodyPose(
-                        position=position,
-                        rotation=rotation,
-                        body_name=body_name
-                    )
-                    
-                    body_poses.append(body_pose)
-            
-            # Create the update request
-            request = mujoco_ar_pb2.PoseUpdateRequest(
-                body_poses=body_poses,
-                session_id=self.session_id,
-                timestamp=time.time()
-            )
-            
-            # Send the update
-            if self.grpc_stub:
-                response = self.grpc_stub.UpdatePoses(request)
-                if response.success:
-                    pass 
-                else:
-                    print(f"❌ Pose update failed: {response.message}")
-            else:
-                print("❌ gRPC connection not available")
+            # Update the current poses that the streaming thread will send
+            with self.pose_stream_lock:
+                self.current_poses = poses
                 
         except Exception as e:
-            print(f"❌ Error in update: {e}")
+            print(f"❌ Error in sync: {e}")
+
+    def start_pose_streaming(self):
+        """Start pose streaming in background thread"""
+        if self.pose_stream_running:
+            print("⚠️ Pose streaming already running")
+            return
+        
+        print("🔄 Starting pose streaming...")
+        self.pose_stream_running = True
+        self.pose_stream_thread = threading.Thread(target=self._pose_streaming_loop, daemon=True)
+        self.pose_stream_thread.start()
+    
+    def stop_pose_streaming(self):
+        """Stop pose streaming"""
+        if not self.pose_stream_running:
+            return
+        
+        print("🛑 Stopping pose streaming...")
+        self.pose_stream_running = False
+        if self.pose_stream_thread:
+            self.pose_stream_thread.join(timeout=2.0)
+    
+    def _pose_streaming_loop(self):
+        """Background thread to continuously stream poses"""
+        try:
+            print(f"🔌 Connecting to pose stream at {self.avp_ip}:{self.grpc_port}")
+            
+            def pose_generator():
+                while self.pose_stream_running:
+                    # Get current poses (thread-safe)
+                    with self.pose_stream_lock:
+                        current_poses = self.current_poses.copy()
+                    
+                    if current_poses:
+                        body_poses = []
+                        
+                        for body_name, pose_data in current_poses.items():
+                            if body_name:  # Skip empty body names
+                                # Create protobuf objects
+                                position = mujoco_ar_pb2.Vector3(
+                                    x=pose_data["xpos"][0],
+                                    y=pose_data["xpos"][1], 
+                                    z=pose_data["xpos"][2]
+                                )
+                                
+                                rotation = mujoco_ar_pb2.Quaternion(
+                                    x=pose_data["xquat"][1],  # Note: MuJoCo uses w,x,y,z order
+                                    y=pose_data["xquat"][2],
+                                    z=pose_data["xquat"][3],
+                                    w=pose_data["xquat"][0]   # w comes first in MuJoCo
+                                )
+                                
+                                body_pose = mujoco_ar_pb2.BodyPose(
+                                    position=position,
+                                    rotation=rotation,
+                                    body_name=body_name
+                                )
+                                
+                                body_poses.append(body_pose)
+                        
+                        if body_poses:
+                            # Create the update request
+                            request = mujoco_ar_pb2.PoseUpdateRequest(
+                                body_poses=body_poses,
+                                session_id=self.session_id,
+                                timestamp=time.time()
+                            )
+                            
+                            yield request
+                    
+                    # Stream at ~100 Hz (10ms delay) - adjust as needed
+                    time.sleep(0.01)
+            
+            # Start streaming poses
+            responses = self.grpc_stub.StreamPoses(pose_generator())
+            
+            print("✅ Pose streaming connected!")
+            
+            for response in responses:
+                if not self.pose_stream_running:
+                    break
+                    
+                if not response.success:
+                    print(f"⚠️ Pose stream response: {response.message}")
+                
+        except grpc.RpcError as e:
+            if self.pose_stream_running:  # Only print error if we didn't intentionally stop
+                if e.code() == grpc.StatusCode.UNAVAILABLE:
+                    print(f"❌ Pose streaming server unavailable")
+                else:
+                    print(f"❌ Pose streaming gRPC Error: {e}")
+            self.pose_stream_running = False
+        except Exception as e:
+            if self.pose_stream_running:
+                print(f"❌ Pose streaming error: {e}")
+            self.pose_stream_running = False
 
     # MARK: - Hand Tracking Methods
     
@@ -584,6 +655,7 @@ class MJARViewer:
     def close(self):
         """Clean up resources"""
         self.stop_hand_tracking()
+        self.stop_pose_streaming()
         if hasattr(self, 'grpc_channel'):
             self.grpc_channel.close()
 

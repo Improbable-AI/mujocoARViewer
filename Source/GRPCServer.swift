@@ -5,9 +5,32 @@ import GRPCProtobuf
 import NIOCore
 import NIOPosix
 import simd
+import QuartzCore
 
 // Import the generated proto files
 // Note: Make sure the generated files are included in your Xcode target
+
+// Simple thread-safe rate limiter
+private class RateLimiter {
+    private var lastUpdateTime: CFTimeInterval = 0
+    private let minInterval: CFTimeInterval
+    private let queue = DispatchQueue(label: "com.mujocoAR.rateLimiter")
+    
+    init(maxFPS: Double) {
+        self.minInterval = 1.0 / maxFPS
+    }
+    
+    func shouldAllow() -> Bool {
+        return queue.sync {
+            let currentTime = CACurrentMediaTime()
+            if currentTime - lastUpdateTime >= minInterval {
+                lastUpdateTime = currentTime
+                return true
+            }
+            return false
+        }
+    }
+}
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 final class GRPCServerManager: ObservableObject {
@@ -61,6 +84,12 @@ final class GRPCServerManager: ObservableObject {
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
     var immersiveView: ImmersiveView?
+    
+    // Add a serial queue for pose processing to prevent race conditions
+    private let poseProcessingQueue = DispatchQueue(label: "com.mujocoAR.poseProcessing", qos: .userInteractive)
+    
+    // Rate limiter to prevent overwhelming the rendering system
+    private let rateLimiter = RateLimiter(maxFPS: 60)
     
     init(immersiveView: ImmersiveView) {
         self.immersiveView = immersiveView
@@ -264,16 +293,31 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         print("📨 [updatePoses] Session ID: \(request.sessionID)")
         print("📨 [updatePoses] Timestamp: \(request.timestamp)")
         
-        // Convert gRPC poses to a format the immersive view can use
-        var poses: [String: MujocoAr_BodyPose] = [:]
-        
+        // Convert gRPC poses to a format for computation
+        var posesMutable: [String: MujocoAr_BodyPose] = [:]
         for bodyPose in request.bodyPoses {
-            poses[bodyPose.bodyName] = bodyPose
+            posesMutable[bodyPose.bodyName] = bodyPose
         }
+        let poses = posesMutable  // make immutable snapshot
         
-        // Update poses in the immersive view
-        await MainActor.run {
-            immersiveView?.updatePoses(poses)
+        // Process poses on serial queue to prevent race conditions
+        await withCheckedContinuation { continuation in
+            poseProcessingQueue.async {
+                Task { @MainActor in
+                    guard let immersiveView = immersiveView else { 
+                        continuation.resume()
+                        return 
+                    }
+                    
+                    // Compute the final transforms here
+                    let finalTransforms = immersiveView.computeFinalTransforms(poses)
+                    
+                    // Apply the pre-computed transforms atomically
+                    immersiveView.updatePosesWithTransforms(finalTransforms)
+                    
+                    continuation.resume()
+                }
+            }
         }
         
         var response = MujocoAr_PoseUpdateResponse()
@@ -293,15 +337,32 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         do {
             for try await poseRequest in request {
                 // Process each pose update
-                var poses: [String: MujocoAr_BodyPose] = [:]
-                
+                var posesMutable: [String: MujocoAr_BodyPose] = [:]
                 for bodyPose in poseRequest.bodyPoses {
-                    poses[bodyPose.bodyName] = bodyPose
+                    posesMutable[bodyPose.bodyName] = bodyPose
                 }
+                let poses = posesMutable  // immutable snapshot
                 
-                // Update poses in the immersive view
-                await MainActor.run {
-                    immersiveView?.updatePoses(poses)
+                // Process all pose updates - let SwiftUI handle the rendering rate
+                
+                // Process poses on serial queue to prevent race conditions 
+                await withCheckedContinuation { continuation in
+                    poseProcessingQueue.async {
+                        Task { @MainActor in
+                            guard let immersiveView = immersiveView else { 
+                                continuation.resume()
+                                return 
+                            }
+                            
+                            // Compute the final transforms here
+                            let finalTransforms = immersiveView.computeFinalTransforms(poses)
+                            
+                            // Apply the pre-computed transforms atomically
+                            immersiveView.updatePosesWithTransforms(finalTransforms)
+                            
+                            continuation.resume()
+                        }
+                    }
                 }
                 
                 // Send response
@@ -347,4 +408,3 @@ struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
         print("🖐️ [streamHandTracking] Client disconnected from hand tracking stream")
     }
 }
-

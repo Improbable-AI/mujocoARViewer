@@ -155,6 +155,10 @@ struct ImmersiveView: View {
     @State private var attachToPosition: SIMD3<Float>? = nil
     @State private var attachToRotation: simd_quatf? = nil
     
+    // Pose update trigger - stores final transformed matrices ready to apply
+    @State private var finalTransforms: [String: simd_float4x4] = [:]
+    @State private var poseUpdateTrigger: UUID = UUID()
+    
     // Hand tracking state
     @State private var handTrackingData: MujocoAr_HandTrackingUpdate = MujocoAr_HandTrackingUpdate()
     @State private var arkitSession = ARKitSession()
@@ -162,6 +166,9 @@ struct ImmersiveView: View {
     @State private var worldTracking = WorldTrackingProvider()
     
     let spatialGen = SpatialGenHelper()
+    // If true, apply transforms directly in world (ground) space using parent-first ordering.
+    // If false, compute local transforms relative to the parent for order-independent application.
+    private let applyInWorldSpace: Bool = true
     
 
     var body: some View {
@@ -177,6 +184,38 @@ struct ImmersiveView: View {
                 if let entity = entity {
                     content.add(entity)
                     print("✅ Added initial entity to RealityView: \(entity.name)")
+                }
+                
+            } update: { updateContent, updatedAttachments in
+                // This is called whenever @State variables change
+                // Use this for pose updates and model changes
+                
+                // Handle model updates
+                if let newEntity = entity {
+                    // Check if this entity is already in the scene
+                    let existingEntities = updateContent.entities
+                    let entityExists = existingEntities.contains { $0.id == newEntity.id }
+                    
+                    if !entityExists {
+                        // Remove any previous model entities (keep status display)
+                        for existingEntity in existingEntities {
+                            if existingEntity.name != "statusHeadAnchor" {
+                                updateContent.remove(existingEntity)
+                            }
+                        }
+                        
+                        // Add the new entity
+                        updateContent.add(newEntity)
+                        print("✅ [RealityView.update] Added new entity: \(newEntity.name)")
+                    }
+                }
+                
+                // Handle pose updates through the update mechanism - DON'T modify state here
+                if !finalTransforms.isEmpty {
+                    print("🔄 [RealityView.update] Applying \(finalTransforms.count) final transforms")
+                    // Apply transforms without modifying state
+                    applyFinalTransforms(finalTransforms)
+                    print("✅ [RealityView.update] Applied transforms successfully")
                 }
                 
             } attachments: {
@@ -298,6 +337,14 @@ struct ImmersiveView: View {
                 Task {
                     await loadUsdzModel(from: url)
                 }
+            }
+        }
+        .onChange(of: poseUpdateTrigger) { _, _ in
+            // Clear transforms after they've been applied
+            // This happens outside the update block to avoid state modification warnings
+            Task {
+                try? await Task.sleep(nanoseconds: 1_000_000) // 1ms delay to ensure update block ran
+                finalTransforms = [:]
             }
         }
         .onDisappear {
@@ -438,17 +485,90 @@ struct ImmersiveView: View {
         }
     }
     
-    func updatePoses(_ poses: [String: MujocoAr_BodyPose]) {
-        print("🔄 [updatePoses] Called with \(poses.count) poses")
+    func updatePosesWithTransforms(_ transforms: [String: simd_float4x4]) {
+        print("🔄 [updatePosesWithTransforms] Called with \(transforms.count) final transforms")
         
         // Update connection status to show active pose streaming
-        networkManager.updateConnectionStatus("Streaming Poses - \(poses.count) Bodies")
+        networkManager.updateConnectionStatus("Streaming Poses - \(transforms.count) Bodies")
 
+        // Always update - let SwiftUI handle the update scheduling
+        finalTransforms = transforms
+        poseUpdateTrigger = UUID()
+    }
+    
+    private func applyFinalTransforms(_ transforms: [String: simd_float4x4]) {
+        // Apply transforms in a hierarchy-safe way to avoid order-dependent "wave" artifacts.
+        // 1) Compute application order by depth (parents first)
+        // 2) Convert desired world transforms to local transforms relative to the current/new parent world
+        // 3) Apply local transforms relative to parent so updates are atomic per frame
+
+        // Cache for depths to avoid recomputation
+        var depthCache: [String: Int] = [:]
+
+        func depth(for name: String) -> Int {
+            if let d = depthCache[name] { return d }
+            guard let entity = bodyEntities[name] else { depthCache[name] = 0; return 0 }
+            var d = 0
+            var p = entity.parent
+            while let parent = p {
+                d += 1
+                p = parent.parent
+            }
+            depthCache[name] = d
+            return d
+        }
+
+        // Sort keys by increasing depth so parents update before children
+        let sortedNames = transforms.keys.sorted { lhs, rhs in depth(for: lhs) < depth(for: rhs) }
+
+        // Helper to get current world matrix of an entity (fallback when parent's new world not provided)
+        func currentWorld(of entity: Entity) -> simd_float4x4 {
+            entity.transformMatrix(relativeTo: nil)
+        }
+
+        // Keep a map of newly applied world transforms so children can reference parent's new world
+        var appliedWorld: [String: simd_float4x4] = [:]
+
+        for name in sortedNames {
+            guard let entity = bodyEntities[name], let desiredWorld = transforms[name] else { continue }
+
+            if applyInWorldSpace {
+                // Apply directly in world (ground) space. Because we update parents first, the
+                // computed local transform RealityKit derives will yield the exact desired world.
+                entity.setTransformMatrix(desiredWorld, relativeTo: nil)
+                appliedWorld[name] = desiredWorld
+            } else {
+                // Determine parent world to compute local matrix
+                let parentEntity = entity.parent
+                let parentWorld: simd_float4x4 = {
+                    if let pe = parentEntity, !pe.name.isEmpty {
+                        if let newParentWorld = transforms[pe.name] ?? appliedWorld[pe.name] {
+                            return newParentWorld
+                        } else {
+                            return currentWorld(of: pe)
+                        }
+                    } else {
+                        return matrix_identity_float4x4
+                    }
+                }()
+
+                // Convert world -> local relative to parent
+                let localMatrix = simd_mul(parentWorld.inverse, desiredWorld)
+                entity.setTransformMatrix(localMatrix, relativeTo: parentEntity)
+                appliedWorld[name] = desiredWorld
+            }
+        }
+    }
+    
+    // Helper method to compute final transforms (called from gRPC)
+    func computeFinalTransforms(_ poses: [String: MujocoAr_BodyPose]) -> [String: simd_float4x4] {
         let axisCorrection = simd_quatf(angle: -.pi / 2, axis: SIMD3<Float>(1, 0, 0)) // Z-up → Y-up
+        var finalTransforms: [String: simd_float4x4] = [:]
 
         for (bodyName, pose) in poses {
-            guard let bodyEntity = bodyEntities[bodyName] else {
-                print("⚠️ Body entity '\(bodyName)' not found")
+            // Only compute transforms for bodies that exist
+            guard initialLocalTransforms[bodyName] != nil else {
+                print("⚠️ Body '\(bodyName)' not found in initialLocalTransforms, skipping")
                 continue
             }
 
@@ -469,8 +589,6 @@ struct ImmersiveView: View {
                 
                 // Apply attach_to offset: attach_to_transform * mujoco_transform (both in ZUP)
                 mjWorldTransform = simd_mul(attachTransform, mjWorldTransform)
-                
-                print("🔗 [updatePoses] Applied attach_to offset for '\(bodyName)' in ZUP coordinates")
             }
             
             // Now convert the combined transform from ZUP to RealityKit YUP
@@ -491,9 +609,11 @@ struct ImmersiveView: View {
 
             // Combine: RealityKit_world * local_offset
             let finalTransform = simd_mul(rkWorldTransform, invlocalOffset)
-
-            bodyEntity.setTransformMatrix(finalTransform, relativeTo: nil)
+            
+            finalTransforms[bodyName] = finalTransform
         }
+        
+        return finalTransforms
     }
     
     private func loadUsdzModel(from url: URL) async {

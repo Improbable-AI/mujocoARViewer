@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mujoco-ar-viewer"
-version = "0.2.0"
+version = "0.3.6"
 description = "AR visualization for MuJoCo physics simulations"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -36,8 +36,7 @@ dependencies = [
 
 [project.optional-dependencies]
 usd = [
-    "mujoco-usd-converter>=0.2.0",
-    "usd-core>=23.11",
+    "mujoco-usd-converter",
 ]
 
 [project.urls]
