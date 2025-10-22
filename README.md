@@ -110,7 +110,7 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
     ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/axis_convention.png)
     ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/hand_skeleton_convention.png) 
 
-4. Are there any limitations? When does it fail to view the model? 
+4. Are there any limitations? When does it fail to load the model properly?  
 
     We've recently ran sanity checking on every models on [mujoco-menagerie](https://github.com/google-deepmind/mujoco_menagerie), and these are the results.
 

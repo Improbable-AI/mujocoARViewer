@@ -154,8 +154,11 @@ struct ImmersiveView: View {
     @State private var pythonToSwiftTargets: [String: [String]] = [:]
     @State private var entityPathByObjectID: [ObjectIdentifier: String] = [:]
     @State private var statusEntity: Entity?
+    @State private var statusContainerEntity: Entity?
     @State private var realityContent: RealityViewContent?
     @State private var inputPort: String = "50051"
+    @State private var isMinimized: Bool = false
+    @Namespace private var minimizeNS
     
     // Model attachment offset state (ZUP coordinates)
     @State private var attachToPosition: SIMD3<Float>? = nil
@@ -226,104 +229,178 @@ struct ImmersiveView: View {
                 
             } attachments: {
                 Attachment(id: "status") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "network")
-                                .foregroundColor(.blue)
-                            Text("gRPC Server")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("IP: \(networkManager.ipAddress)")
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundColor(.primary)
-                            
-                            if networkManager.isServerRunning {
-                                Text("Port: \(networkManager.grpcPort, format: .number.grouping(.never))")
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundColor(.primary)
-                            } else {
+                    ZStack(alignment: .topTrailing) {
+                        if isMinimized {
+                            // Minimized: a single circular button in the top-right
+                            Button(action: {
+                                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                                    isMinimized = false
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(.regularMaterial)
+                                        .frame(width: 44, height: 44)
+                                        .shadow(radius: 4)
+                                    Image(systemName: "network")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .matchedGeometryEffect(id: "statusMiniDot", in: minimizeNS)
+                            .padding(6)
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
                                 HStack {
-                                    Text("Port:")
+                                    Image(systemName: "network")
+                                        .foregroundColor(.blue)
+                                    Text("MuJoCo ARViewer")
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("IP: \(networkManager.ipAddress)")
                                         .font(.system(.body, design: .monospaced))
                                         .foregroundColor(.primary)
                                     
-                                    TextField("Port", text: $inputPort)
-                                        .keyboardType(.numberPad)
-                                        .textFieldStyle(.roundedBorder)
-                                        .frame(maxWidth: 100)
-                                        .font(.system(.body, design: .monospaced))
-                                        .onChange(of: inputPort) { _, newValue in
-                                            // Validate port number
-                                            let filtered = newValue.filter { $0.isNumber }
-                                            if filtered != newValue {
-                                                inputPort = filtered
-                                            }
-                                            if let port = Int(filtered), port > 0 && port <= 65535 {
-                                                networkManager.grpcPort = port
-                                            }
+                                    if networkManager.isServerRunning {
+                                        Text("Port: \(networkManager.grpcPort, format: .number.grouping(.never))")
+                                            .font(.system(.body, design: .monospaced))
+                                            .foregroundColor(.primary)
+                                    } else {
+                                        HStack {
+                                            Text("Port:")
+                                                .font(.system(.body, design: .monospaced))
+                                                .foregroundColor(.primary)
+                                            
+                                            TextField("Port", text: $inputPort)
+                                                .keyboardType(.numberPad)
+                                                .textFieldStyle(.roundedBorder)
+                                                .frame(maxWidth: 100)
+                                                .font(.system(.body, design: .monospaced))
+                                                .onChange(of: inputPort) { _, newValue in
+                                                    // Validate port number
+                                                    let filtered = newValue.filter { $0.isNumber }
+                                                    if filtered != newValue {
+                                                        input                                                                                                                                                              Port = filtered
+                                                    }
+                                                    if let port = Int(filtered), port > 0 && port <= 65535 {
+                                                        networkManager.grpcPort = port
+                                                    }
+                                                }
                                         }
+                                    }
+                                    
+                                    HStack {
+                                        Circle()
+                                            .fill(connectionStatusColor)
+                                            .frame(width: 8, height: 8)
+                                        Text("\(networkManager.connectionStatus)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
+                                    if !networkManager.isServerRunning {
+                                        Button(action: {
+                                            Task {
+                                                await startServer()
+                                            }
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "play.fill")
+                                                Text("START SERVER")
+                                                    .font(.caption.weight(.semibold))
+                                            }
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(.green, in: RoundedRectangle(cornerRadius: 8))
+                                        }
+                                        .buttonStyle(.plain)
+                                    } else {
+                                        Button(action: {
+                                            Task {
+                                                await stopServer()
+                                            }
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "stop.fill")
+                                                Text("STOP SERVER")
+                                                    .font(.caption.weight(.semibold))
+                                            }
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(.red, in: RoundedRectangle(cornerRadius: 8))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
                                 }
                             }
-                            
-                            HStack {
-                                Circle()
-                                    .fill(connectionStatusColor)
-                                    .frame(width: 8, height: 8)
-                                Text("\(networkManager.connectionStatus)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            if !networkManager.isServerRunning {
+                            .overlay(alignment: .topTrailing) {
+                                HStack(spacing: 8) {
+
+                                // Minimize control inside the window pane
                                 Button(action: {
-                                    Task {
-                                        await startServer()
+                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                                        isMinimized = true
                                     }
                                 }) {
-                                    HStack {
-                                        Image(systemName: "play.fill")
-                                        Text("START SERVER")
-                                            .font(.caption.weight(.semibold))
+                                    ZStack {
+                                        Circle()
+                                            .fill(.thinMaterial)
+                                            .frame(width: 28, height: 28)
+                                            .shadow(radius: 2)
+                                        Image(systemName: "minus")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.primary)
                                     }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(.green, in: RoundedRectangle(cornerRadius: 8))
                                 }
                                 .buttonStyle(.plain)
-                            } else {
-                                Button(action: {
-                                    Task {
-                                        await stopServer()
+                                .matchedGeometryEffect(id: "statusMiniDot", in: minimizeNS)
+                            
+                            
+                                    // Close (exit) control
+                                    Button(action: {
+                                        // Immediately terminate the app
+                                        exit(0)
+                                    }) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(.thinMaterial)
+                                                .frame(width: 28, height: 28)
+                                                .shadow(radius: 2)
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(.red)
+                                        }
                                     }
-                                }) {
-                                    HStack {
-                                        Image(systemName: "stop.fill")
-                                        Text("STOP SERVER")
-                                            .font(.caption.weight(.semibold))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(.red, in: RoundedRectangle(cornerRadius: 8))
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Close App")
                                 }
-                                .buttonStyle(.plain)
+
                             }
+                            .frame(width: 250)
+                            .padding(20)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                            .glassBackgroundEffect()
+                            .transition(.asymmetric(insertion: .opacity.combined(with: .scale),
+                                                    removal: .opacity.combined(with: .move(edge: .top))))
                         }
                     }
-                    .frame(minWidth: 200)
-                    .padding(20)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    .glassBackgroundEffect()
+                    .animation(.spring(response: 0.45, dampingFraction: 0.85), value: isMinimized)
                 }
             }
             .onAppear {
                 // Register the custom system and component
                 StatusDisplayComponent.registerComponent()
                 StatusDisplaySystem.registerSystem()
+            }
+            .onChange(of: isMinimized) { _, _ in
+                // Smoothly move the status container when minimizing/restoring
+                updateStatusContainerPosition(animated: true)
             }
         }
         .task {
@@ -424,10 +501,10 @@ struct ImmersiveView: View {
         // Add the attachment to the container
         statusContainer.addChild(statusAttachment)
         
-        // Position the status display in the upper right of the user's field of view
-        // Offset it so it's not directly in front of their face
+        // Position the status display in the user's field of view
+        // Default (expanded) location; we'll animate to top-right when minimized
         statusContainer.setPosition([0.0, 0.1, -0.8], relativeTo: headAnchor)
-        
+            
         // Add the container to the head anchor
         headAnchor.addChild(statusContainer)
         
@@ -439,8 +516,28 @@ struct ImmersiveView: View {
         
         // Store reference for cleanup
         statusEntity = headAnchor
+        statusContainerEntity = statusContainer
+            
+        // Ensure initial position matches current minimized state without animation
+        updateStatusContainerPosition(animated: false)
         
         print("✅ Created head-following status display")
+    }
+
+    // Smoothly update the status container position based on minimized state
+    @MainActor
+    private func updateStatusContainerPosition(animated: Bool) {
+        guard let head = statusEntity, let container = statusContainerEntity else { return }
+        let expandedPos = SIMD3<Float>(0.0, 0.1, -0.8)
+        let minimizedPos = SIMD3<Float>(0.3, 0.3, -0.8)
+        let target = isMinimized ? minimizedPos : expandedPos
+        let transform = Transform(translation: target)
+        if animated {
+            // Animate the movement so users can see where it goes
+            container.move(to: transform, relativeTo: head, duration: 0.4)
+        } else {
+            container.setPosition(target, relativeTo: head)
+        }
     }
     
     // MARK: - gRPC Integration Methods
@@ -721,9 +818,9 @@ struct ImmersiveView: View {
         //  - pose(X) is rkWorldTransform (axis-corrected + attach_to applied)
         //  - local(X on Y-side) is the imported local transform of Y's parent (e.g., 'torso_link')
         //  - local(Y) is the imported local transform of the Y leaf itself
-    let parentEntity = bodyEntities[bodyName]?.parent
-    let parentKey = parentEntity.flatMap { entityPathByObjectID[ObjectIdentifier($0)] }
-    let parentLocal = (parentKey.flatMap { initialLocalTransforms[$0]?.matrix }) ?? matrix_identity_float4x4
+        let parentEntity = bodyEntities[bodyName]?.parent
+        let parentKey = parentEntity.flatMap { entityPathByObjectID[ObjectIdentifier($0)] }
+        let parentLocal = (parentKey.flatMap { initialLocalTransforms[$0]?.matrix }) ?? matrix_identity_float4x4
         let yLocal = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
 
         // Combine per option (1)
@@ -1078,8 +1175,8 @@ struct ImmersiveView: View {
         ]
         
         // Clear and rebuild joint matrices
-        handTrackingData.rightHand.skeleton.jointMatrices.removeAll()
-        
+        handTrackingData.rightHand.skeleton.jointMatrices.removeAll()        
+
         for (index, jointType) in jointTypes.enumerated() {
             guard let joint = handAnchor.handSkeleton?.joint(jointType), joint.isTracked else {
                 // Add identity matrix for missing joints to maintain index consistency
@@ -1089,7 +1186,7 @@ struct ImmersiveView: View {
             print(index)
             handTrackingData.rightHand.skeleton.jointMatrices.append(convertToMatrix4x4(joint.anchorFromJointTransform))
         }
-        
+                
         // Update timestamp
         handTrackingData.timestamp = Date().timeIntervalSince1970
         print("Updated right hand skeleton")

@@ -407,6 +407,8 @@ class MJARViewer:
         """
         body_dict = {}
         for body_name, body_id in self.bodies.items(): 
+            if "world" in body_name:
+                continue  # Skip the world body
             xpos = deepcopy(self.data.body(body_id).xpos.tolist())
             xquat = deepcopy(self.data.body(body_id).xquat.tolist())
             # Remove slashes from body name when storing in dictionary
@@ -415,6 +417,7 @@ class MJARViewer:
                 "xpos": xpos, 
                 "xquat": xquat
             }
+
         return body_dict
     
     
