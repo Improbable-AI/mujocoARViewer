@@ -62,7 +62,7 @@ while True:
 
 ## Recommended Read  
 
-### Where to attach your mujoco `world` frame 
+### Where to attach your mujoco `world` frame in AR 
 
 
 Since this is a viewer in augmented reality (which by defintion, blends your simulated environment with your real world environment), deciding where to attach your simulation scene's `world` frame in your actual physical space in real world is important. You can determine this by passing in `attach_to` as an argument either by 
@@ -110,7 +110,11 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
     ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/axis_convention.png)
     ![](https://github.com/Improbable-AI/VisionProTeleop/blob/main/assets/hand_skeleton_convention.png) 
 
+4. Are there any limitations? When does it fail to view the model? 
 
+    We've recently ran sanity checking on every models on [mujoco-menagerie](https://github.com/google-deepmind/mujoco_menagerie), and these are the results.
+
+    [benchmark_on_mujoco_menagerie.md](docs/benchmark.md)
 
 ## License
 
