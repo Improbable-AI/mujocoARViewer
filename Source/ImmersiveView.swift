@@ -284,7 +284,7 @@ struct ImmersiveView: View {
                                                     // Validate port number
                                                     let filtered = newValue.filter { $0.isNumber }
                                                     if filtered != newValue {
-                                                        input                                                                                                                                                              Port = filtered
+                                                        inputPort = filtered
                                                     }
                                                     if let port = Int(filtered), port > 0 && port <= 65535 {
                                                         networkManager.grpcPort = port
