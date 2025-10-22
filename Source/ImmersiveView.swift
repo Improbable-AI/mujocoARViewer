@@ -152,6 +152,7 @@ struct ImmersiveView: View {
     @State private var nameMappingInitialized: Bool = false
     // Cached 1:N mapping: Python body name -> multiple Swift entity target names to move together
     @State private var pythonToSwiftTargets: [String: [String]] = [:]
+    @State private var entityPathByObjectID: [ObjectIdentifier: String] = [:]
     @State private var statusEntity: Entity?
     @State private var realityContent: RealityViewContent?
     @State private var inputPort: String = "50051"
@@ -551,8 +552,9 @@ struct ImmersiveView: View {
                 // Determine parent world to compute local matrix
                 let parentEntity = entity.parent
                 let parentWorld: simd_float4x4 = {
-                    if let pe = parentEntity, !pe.name.isEmpty {
-                        if let newParentWorld = transforms[pe.name] ?? appliedWorld[pe.name] {
+                    if let pe = parentEntity {
+                        let pKey = entityPathByObjectID[ObjectIdentifier(pe)]
+                        if let pk = pKey, let newParentWorld = transforms[pk] ?? appliedWorld[pk] {
                             return newParentWorld
                         } else {
                             return currentWorld(of: pe)
@@ -616,12 +618,23 @@ struct ImmersiveView: View {
                 print("⚠️ [mapping] No base match for Python body '\(pyName)' — skipping multi-target mapping")
                 return []
             }
-            // Compute co-move targets: any ModelEntity whose parent name == base and that has zero children (leaf nodes),
-            // regardless of where that parent instance sits in the RealityKit hierarchy. This accounts for wrapper insertion.
+            // Compute co-move targets: leaf ModelEntities directly under base, or one-hop via a same-named node
             var result: [String] = []
-            for model in bodyEntities.values {
-                if model.parent?.name == base && model.children.isEmpty {
-                    result.append(model.name)
+            for child in baseEntity.children {
+                if let model = child as? ModelEntity {
+                    if model.children.isEmpty, let key = entityPathByObjectID[ObjectIdentifier(model)] {
+                        result.append(key)
+                    }
+                } else {
+                    // Common pattern: importer creates a Node with the same name as base; look one level deeper
+                    if child.name == baseEntity.name {
+                        for grand in child.children {
+                            if let leaf = grand as? ModelEntity, leaf.children.isEmpty,
+                               let key = entityPathByObjectID[ObjectIdentifier(leaf)] {
+                                result.append(key)
+                            }
+                        }
+                    }
                 }
             }
             pythonToSwiftTargets[pyName] = result
@@ -645,7 +658,7 @@ struct ImmersiveView: View {
                         continue
                     }
                     // Compute final transform for this target using same pose
-                    let computed = computeFinalTransformForTarget(bodyName: bodyName, pose: pose,
+                    let computed = computeFinalTransformForTarget(bodyName: bodyName, pyName: pyName, pose: pose,
                                                                   axisCorrection: axisCorrection)
                     finalTransforms[bodyName] = computed
                 }
@@ -657,7 +670,7 @@ struct ImmersiveView: View {
                     print("⚠️ Body '\(bodyName)' not found in initialLocalTransforms, skipping")
                     continue
                 }
-                let computed = computeFinalTransformForTarget(bodyName: bodyName, pose: pose,
+                let computed = computeFinalTransformForTarget(bodyName: bodyName, pyName: pyName, pose: pose,
                                                               axisCorrection: axisCorrection)
                 finalTransforms[bodyName] = computed
             }
@@ -670,6 +683,7 @@ struct ImmersiveView: View {
 
     // Compute the final transform for a specific target name, using that target's local offset
     private func computeFinalTransformForTarget(bodyName: String,
+                                                pyName: String,
                                                 pose: MujocoAr_BodyPose,
                                                 axisCorrection: simd_quatf) -> simd_float4x4 {
         let mjPos = SIMD3<Float>(pose.position.x, pose.position.y, pose.position.z)
@@ -679,6 +693,9 @@ struct ImmersiveView: View {
         var mjWorldTransform = matrix_identity_float4x4
         mjWorldTransform = simd_mul(matrix_float4x4(mjRot), mjWorldTransform)
         mjWorldTransform.columns.3 = SIMD4<Float>(mjPos, 1.0)
+
+        // Keep a pristine PS(X) before attach/axis for debug
+        let psMatrix = mjWorldTransform
 
         // Apply attach_to offset BEFORE axis correction (ZUP)
         if let attachPos = attachToPosition, let attachRot = attachToRotation {
@@ -698,15 +715,23 @@ struct ImmersiveView: View {
         rkWorldTransform = simd_mul(matrix_float4x4(rkRot), rkWorldTransform)
         rkWorldTransform.columns.3 = SIMD4<Float>(rkPos, 1.0)
 
-        // Target-specific local offset
-        let localOffset = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
-        let invlocalOffset = localOffset.inverse
+        // Option (1): Apply extra transformation on top of Y-side parent (X) transform, then Y's local
+        // final = pose(X) @ local(X on Y-side) @ local(Y)
+        // Where:
+        //  - pose(X) is rkWorldTransform (axis-corrected + attach_to applied)
+        //  - local(X on Y-side) is the imported local transform of Y's parent (e.g., 'torso_link')
+        //  - local(Y) is the imported local transform of the Y leaf itself
+    let parentEntity = bodyEntities[bodyName]?.parent
+    let parentKey = parentEntity.flatMap { entityPathByObjectID[ObjectIdentifier($0)] }
+    let parentLocal = (parentKey.flatMap { initialLocalTransforms[$0]?.matrix }) ?? matrix_identity_float4x4
+        let yLocal = initialLocalTransforms[bodyName]?.matrix ?? matrix_identity_float4x4
 
-        // Combine
-        let finalTransform = simd_mul(rkWorldTransform, invlocalOffset)
+        // Combine per option (1)
+        let finalTransform = rkWorldTransform * yLocal
+
         return finalTransform
     }
-    
+
     private func loadUsdzModel(from url: URL) async {
         do {
             // --- Reset state before loading new model ---
@@ -726,6 +751,7 @@ struct ImmersiveView: View {
             pythonToSwiftNameMap.removeAll()
             nameMappingInitialized = false
             pythonToSwiftTargets.removeAll()
+            entityPathByObjectID.removeAll()
             
             // Note: attachToPosition and attachToRotation are preserved from the send_model call
             // They are only reset when explicitly sending a new model without attach_to
@@ -848,7 +874,8 @@ struct ImmersiveView: View {
     
     private func indexBodyEntities(_ rootEntity: Entity) {
         bodyEntities.removeAll()
-        initialLocalTransforms.removeAll() 
+        initialLocalTransforms.removeAll()
+        entityPathByObjectID.removeAll()
         print("🔍 [indexBodyEntities] Starting recursive indexing...")
 
         func entityDepth(_ entity: Entity) -> Int {
@@ -871,50 +898,66 @@ struct ImmersiveView: View {
             }
         }
 
-        func indexChildren(_ entity: Entity) {
-            if !entity.name.isEmpty {
-                if let modelEntity = entity as? ModelEntity {
-                    bodyEntities[entity.name] = modelEntity
-                    initialLocalTransforms[entity.name] = modelEntity.transform
-                    let parentName = modelEntity.parent?.name ?? "(root)"
-                    let depth = entityDepth(modelEntity)
-                    print("📎 [hier] \(String(repeating: "  ", count: depth))- [Model] '\(entity.name)' parent='\(parentName)' children=\(modelEntity.children.count)")
-                    print("✅ Added ModelEntity: '\(entity.name)' \(entity.scale)")
-                } else {
-                    // Insert a wrapper to ensure we can drive transforms
-                    let wrapper = ModelEntity()
-                    wrapper.name = entity.name
-                    // Preserve local TR first; scale will be applied with setScale after parenting
-                    wrapper.transform = entity.transform
-
-                    // Preserve the original local scale and apply using setScale relative to parent
-                    let preservedScale = entity.scale
-
-                    let originalParentName = entity.parent?.name ?? "(root)"
-                    if let parent = entity.parent {
-                        parent.addChild(wrapper)
-                        entity.removeFromParent()
-                        wrapper.addChild(entity)
-                        // Apply scale relative to its new parent so RealityKit honors it in the hierarchy
-//                        wrapper.setScale(preservedScale, relativeTo: parent)
-                    } else {
-                        // No parent: fall back to setting local scale directly
-                        wrapper.scale = preservedScale
-                    }
-
-                    bodyEntities[wrapper.name] = wrapper
-                    initialLocalTransforms[wrapper.name] = wrapper.transform
-                    let depth = entityDepth(wrapper)
-                    print("📎 [hier] \(String(repeating: "  ", count: depth))- [Wrapper] '\(wrapper.name)' inserted between parent='\(originalParentName)' and child='\(entity.name)'")
-                    print("✅ Added wrapper: '\(wrapper.name)' (cached local offset) \(wrapper.scale)")
+        func indexRec(_ entity: Entity, parentPath: String) {
+            // Skip unnamed entities for keying, but still recurse
+            if entity.name.isEmpty {
+                for child in entity.children {
+                    indexRec(child, parentPath: parentPath)
                 }
+                return
             }
-            for child in entity.children {
-                indexChildren(child)
+
+            if let modelEntity = entity as? ModelEntity {
+                let pathKey = parentPath.isEmpty ? modelEntity.name : "\(parentPath)/\(modelEntity.name)"
+                bodyEntities[pathKey] = modelEntity
+                initialLocalTransforms[pathKey] = modelEntity.transform
+                entityPathByObjectID[ObjectIdentifier(modelEntity)] = pathKey
+
+                let parentName = modelEntity.parent?.name ?? "(root)"
+                let depth = entityDepth(modelEntity)
+                print("📎 [hier] \(String(repeating: "  ", count: depth))- [Model] '\(modelEntity.name)' parent='\(parentName)' children=\(modelEntity.children.count)")
+                print("✅ Added ModelEntity: '\(modelEntity.name)' \(modelEntity.scale)")
+
+                for child in modelEntity.children {
+                    indexRec(child, parentPath: pathKey)
+                }
+            } else {
+                // Insert a wrapper to ensure we can drive transforms for non-Model entities
+                let wrapper = ModelEntity()
+                wrapper.name = entity.name
+                wrapper.transform = entity.transform
+                let preservedScale = entity.scale
+
+                // Capture the original children before reparenting
+                let originalChildren = Array(entity.children)
+
+                let originalParentName = entity.parent?.name ?? "(root)"
+                if let parent = entity.parent {
+                    parent.addChild(wrapper)
+                    entity.removeFromParent()
+                    wrapper.addChild(entity)
+                    // wrapper.setScale(preservedScale, relativeTo: parent)
+                } else {
+                    wrapper.scale = preservedScale
+                }
+
+                let pathKey = parentPath.isEmpty ? wrapper.name : "\(parentPath)/\(wrapper.name)"
+                bodyEntities[pathKey] = wrapper
+                initialLocalTransforms[pathKey] = wrapper.transform
+                entityPathByObjectID[ObjectIdentifier(wrapper)] = pathKey
+
+                let depth = entityDepth(wrapper)
+                print("📎 [hier] \(String(repeating: "  ", count: depth))- [Wrapper] '\(wrapper.name)' inserted between parent='\(originalParentName)' and child='\(entity.name)'")
+                print("✅ Added wrapper: '\(wrapper.name)' (cached local offset) \(wrapper.scale)")
+
+                // Recurse into the original node's children under the wrapper's path (avoid re-wrapping the original node)
+                for child in originalChildren {
+                    indexRec(child, parentPath: pathKey)
+                }
             }
         }
 
-        indexChildren(rootEntity)
+        indexRec(rootEntity, parentPath: "")
         print("📝 Indexed \(bodyEntities.count) entities with cached local transforms")
         print("📑 Scene Hierarchy:")
         printHierarchy(from: rootEntity, depth: 0)

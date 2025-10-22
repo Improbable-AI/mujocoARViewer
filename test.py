@@ -10,7 +10,7 @@ data = mujoco.MjData(model)
 
 avp_ip = "192.168.86.20"
 arviewer = MJARViewer(avp_ip=avp_ip, grpc_port=50051, enable_hand_tracking=False)
-arviewer.load_scene(usdz_path, attach_to=[0, 1, 0.8, 1, 0, 0, 0])  # Load scene 0.5m up
+arviewer.load_scene(usdz_path, attach_to=[0, 1, 0.0, 1, 0, 0, 0])  # Load scene 0.5m up
 
 arviewer.register(model, data)
 
