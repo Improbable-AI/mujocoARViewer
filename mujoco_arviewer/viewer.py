@@ -12,6 +12,8 @@ import numpy as np
 from copy import deepcopy
 # Import generated gRPC classes
 from .generated import mujoco_ar_pb2, mujoco_ar_pb2_grpc
+from .upload_xml import zip_scene_dir, convert_and_download
+from scipy.spatial.transform import Rotation as R
 
 # Constants and helper functions for hand tracking data processing
 YUP2ZUP = np.array([[[1, 0, 0, 0], 
@@ -101,12 +103,17 @@ class MJARViewer:
         self.current_poses = {}
         self.pose_stream_running = False
         self.pose_stream_lock = threading.Lock()
-        
+        self.attach_to_mat = np.eye(4) 
+
         self._setup_grpc_client()
         
         # Auto-start hand tracking if enabled
         if self.enable_hand_tracking:
             self.start_hand_tracking()
+            while True: 
+                if self.hand_tracking_data is not None:
+                    break
+                time.sleep(0.1)
             
         # Auto-start pose streaming
         self.start_pose_streaming()
@@ -137,7 +144,7 @@ class MJARViewer:
             print(f"❌ Failed to setup gRPC client: {e}")
 
 
-    def load_scene(self, model_path, attach_to=None):
+    def load_scene(self, model_path, attach_to=None, force_reload=False):
         """
         model_path: str, either XML or USDZ file path
         attach_to: array-like of length 7 with [x, y, z, qw, qx, qy, qz] in ZUP coordinates
@@ -146,21 +153,38 @@ class MJARViewer:
 
         # if XML, convert to USDZ first
         if model_path.endswith('.xml'):
-            usdz_path = self._convert_to_usdz(model_path)
             
+            # check if usdz already exists
+            usdz_path = model_path.replace('.xml', '.usdz')
+            if not os.path.exists(usdz_path) or force_reload:
+                try: 
+                    usdz_path = self._convert_to_usdz(model_path)
+                except Exception as e:
+                    usdz_path = convert_and_download(server="http://improbable382.csail.mit.edu:8080", \
+                                        scene_xml=Path(model_path), out_dir=Path(model_path).parent)
         else: 
             usdz_path = model_path
 
-        # if attach_to is 4 dim 
-        if len(attach_to) == 4: 
-            # assume it's [x,y,z, rotation around z in degrees], convert to quaternion
-            yaw_deg = attach_to[3]
-            yaw_rad = np.radians(yaw_deg / 2)
-            qw = np.cos(yaw_rad)
-            qx = 0.0
-            qy = 0.0
-            qz = np.sin(yaw_rad)
-            attach_to = [attach_to[0], attach_to[1], attach_to[2], qw, qx, qy, qz]
+
+        if attach_to is not None:
+
+            # if attach_to is 4 dim 
+            if len(attach_to) == 4: 
+                # assume it's [x,y,z, rotation around z in degrees], convert to quaternion
+                yaw_deg = attach_to[3]
+                yaw_rad = np.radians(yaw_deg / 2)
+                qw = np.cos(yaw_rad)
+                qx = 0.0
+                qy = 0.0
+                qz = np.sin(yaw_rad)
+                attach_to = [attach_to[0], attach_to[1], attach_to[2], qw, qx, qy, qz]
+
+
+            self.attach_to_mat[:3, :3] = R.from_quat(attach_to[3:], scalar_first = True ).as_matrix()
+            self.attach_to_mat[:3, 3] = attach_to[:3]
+        else: 
+            self.attach_to_mat = np.eye(4) 
+            attach_to = [0, 0, 0, 1, 0, 0, 0]
 
         self._send_usdz_data(usdz_path, attach_to=attach_to)
 
@@ -593,11 +617,11 @@ class MJARViewer:
         left_wrist_roll = None
         
         if update.left_hand.HasField('wrist_matrix'):
-            left_wrist = YUP2ZUP @ process_matrix(update.left_hand.wrist_matrix)
+            left_wrist = np.linalg.inv(self.attach_to_mat[np.newaxis, :, :]) @ YUP2ZUP @ process_matrix(update.left_hand.wrist_matrix) 
             left_wrist_roll = get_wrist_roll(left_wrist)
             
         if update.left_hand.skeleton.joint_matrices:
-            left_fingers = process_matrices(update.left_hand.skeleton.joint_matrices)
+            left_fingers = process_matrices(update.left_hand.skeleton.joint_matrices) 
             left_pinch_distance = get_pinch_distance(update.left_hand.skeleton.joint_matrices)
 
         # Process right hand data  
@@ -607,7 +631,7 @@ class MJARViewer:
         right_wrist_roll = None
         
         if update.right_hand.HasField('wrist_matrix'):
-            right_wrist = YUP2ZUP @ process_matrix(update.right_hand.wrist_matrix)
+            right_wrist = np.linalg.inv(self.attach_to_mat[np.newaxis, :, :]) @ YUP2ZUP @ process_matrix(update.right_hand.wrist_matrix) 
             right_wrist_roll = get_wrist_roll(right_wrist)
             
         if update.right_hand.skeleton.joint_matrices:

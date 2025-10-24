@@ -1,9 +1,9 @@
-import Foundation
+//import Foundation
 import GRPCCore
 import GRPCNIOTransportHTTP2
 import GRPCProtobuf
-import NIOCore
-import NIOPosix
+//import NIOCore
+//import NIOPosix
 import simd
 import QuartzCore
 
@@ -32,7 +32,6 @@ private class RateLimiter {
     }
 }
 
-@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 final class GRPCServerManager: ObservableObject {
     private var grpcServer: GRPCServer<HTTP2ServerTransport.Posix>?
     private var currentPort: Int = 50051
@@ -81,7 +80,7 @@ final class GRPCServerManager: ObservableObject {
     }
 }
 
-@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+//@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
 struct MuJoCoARServiceImpl: MujocoAr_MuJoCoARService.SimpleServiceProtocol {
     var immersiveView: ImmersiveView?
     

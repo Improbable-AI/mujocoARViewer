@@ -3,14 +3,15 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 90;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		72317BEE2A80F2D30044B240 /* ImmersiveMoveAndRotateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72317BED2A80F2D30044B240 /* ImmersiveMoveAndRotateApp.swift */; };
+		72317BEE2A80F2D30044B240 /* mujocoARViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72317BED2A80F2D30044B240 /* mujocoARViewer.swift */; };
 		72317BF22A80F2D30044B240 /* ImmersiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72317BF12A80F2D30044B240 /* ImmersiveView.swift */; };
 		72317BF62A80F2D60044B240 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 72317BF52A80F2D60044B240 /* Assets.xcassets */; };
-		727133A82B61138500B71B5E /* EntityMovementViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 727133A72B61138500B71B5E /* EntityMovementViewModifier.swift */; };
+		C128108F2EAACC6300351571 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C128108E2EAACC6300351571 /* AppModel.swift */; };
+		C12810912EAACC8F00351571 /* ReallityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12810902EAACC8800351571 /* ReallityView.swift */; };
 		C1A258FD2EA31AF80043F4D0 /* GRPCServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A258FC2EA31AF80043F4D0 /* GRPCServer.swift */; };
 		C1CD20BB2EA2D4D900007546 /* APIHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CD20BA2EA2D4D900007546 /* APIHandler.swift */; };
 		C1F4A5852EA326C1001A9170 /* GRPCCodeGen in Frameworks */ = {isa = PBXBuildFile; productRef = C1F4A5842EA326C1001A9170 /* GRPCCodeGen */; };
@@ -26,11 +27,12 @@
 
 /* Begin PBXFileReference section */
 		72317BE62A80F2D30044B240 /* mujocoARViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mujocoARViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		72317BED2A80F2D30044B240 /* ImmersiveMoveAndRotateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveMoveAndRotateApp.swift; sourceTree = "<group>"; };
+		72317BED2A80F2D30044B240 /* mujocoARViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mujocoARViewer.swift; sourceTree = "<group>"; };
 		72317BF12A80F2D30044B240 /* ImmersiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveView.swift; sourceTree = "<group>"; };
 		72317BF52A80F2D60044B240 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		727133A72B61138500B71B5E /* EntityMovementViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityMovementViewModifier.swift; sourceTree = "<group>"; };
 		727133A92B6114CC00B71B5E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C128108E2EAACC6300351571 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		C12810902EAACC8800351571 /* ReallityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReallityView.swift; sourceTree = "<group>"; };
 		C1A258FC2EA31AF80043F4D0 /* GRPCServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GRPCServer.swift; sourceTree = "<group>"; };
 		C1CD20BA2EA2D4D900007546 /* APIHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIHandler.swift; sourceTree = "<group>"; };
 		C1F4A5822EA32668001A9170 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
@@ -41,7 +43,6 @@
 /* Begin PBXFrameworksBuildPhase section */
 		72317BE32A80F2D30044B240 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C1F4A5972EA327D1001A9170 /* GRPCNIOTransportHTTP2TransportServices in Frameworks */,
 				C1F4A5852EA326C1001A9170 /* GRPCCodeGen in Frameworks */,
@@ -51,7 +52,6 @@
 				C1F4A5952EA327D1001A9170 /* GRPCNIOTransportHTTP2Posix in Frameworks */,
 				C1F4A5892EA326C1001A9170 /* GRPCInProcessTransport in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -59,9 +59,7 @@
 		72317BDD2A80F2D30044B240 = {
 			isa = PBXGroup;
 			children = (
-				C1F4A5822EA32668001A9170 /* Package.swift */,
 				72317BE82A80F2D30044B240 /* Source */,
-				C14D50942EA320630021DD2B /* Frameworks */,
 				72317BE72A80F2D30044B240 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -77,24 +75,19 @@
 		72317BE82A80F2D30044B240 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				72317BED2A80F2D30044B240 /* ImmersiveMoveAndRotateApp.swift */,
+				C12810902EAACC8800351571 /* ReallityView.swift */,
+				C1F4A5822EA32668001A9170 /* Package.swift */,
+				C128108E2EAACC6300351571 /* AppModel.swift */,
+				72317BED2A80F2D30044B240 /* mujocoARViewer.swift */,
 				72317BF12A80F2D30044B240 /* ImmersiveView.swift */,
 				C1A258FC2EA31AF80043F4D0 /* GRPCServer.swift */,
 				C1F4A58A2EA326E4001A9170 /* mujoco_ar.grpc.swift */,
 				C1F4A58C2EA326EA001A9170 /* mujoco_ar.pb.swift */,
 				C1CD20BA2EA2D4D900007546 /* APIHandler.swift */,
-				727133A72B61138500B71B5E /* EntityMovementViewModifier.swift */,
 				72317BF52A80F2D60044B240 /* Assets.xcassets */,
 				727133A92B6114CC00B71B5E /* Info.plist */,
 			);
 			path = Source;
-			sourceTree = "<group>";
-		};
-		C14D50942EA320630021DD2B /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,8 +102,6 @@
 				72317BE42A80F2D30044B240 /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = mujocoARViewer;
 			packageProductDependencies = (
@@ -134,7 +125,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					72317BE52A80F2D30044B240 = {
 						CreatedOnToolsVersion = 15.0;
@@ -142,7 +133,6 @@
 				};
 			};
 			buildConfigurationList = 72317BE12A80F2D30044B240 /* Build configuration list for PBXProject "mujocoARViewer" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -155,6 +145,7 @@
 				C1F4A58E2EA32738001A9170 /* XCRemoteSwiftPackageReference "grpc-swift-protobuf" */,
 				C1F4A5912EA327D1001A9170 /* XCRemoteSwiftPackageReference "grpc-swift-nio-transport" */,
 			);
+			preferredProjectObjectVersion = 90;
 			productRefGroup = 72317BE72A80F2D30044B240 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -167,43 +158,41 @@
 /* Begin PBXResourcesBuildPhase section */
 		72317BE42A80F2D30044B240 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				72317BF62A80F2D60044B240 /* Assets.xcassets in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		72317BE22A80F2D30044B240 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
+				C128108F2EAACC6300351571 /* AppModel.swift in Sources */,
 				C1A258FD2EA31AF80043F4D0 /* GRPCServer.swift in Sources */,
-				72317BEE2A80F2D30044B240 /* ImmersiveMoveAndRotateApp.swift in Sources */,
+				72317BEE2A80F2D30044B240 /* mujocoARViewer.swift in Sources */,
 				C1F4A58B2EA326E4001A9170 /* mujoco_ar.grpc.swift in Sources */,
 				72317BF22A80F2D30044B240 /* ImmersiveView.swift in Sources */,
-				727133A82B61138500B71B5E /* EntityMovementViewModifier.swift in Sources */,
 				C1CD20BB2EA2D4D900007546 /* APIHandler.swift in Sources */,
+				C12810912EAACC8F00351571 /* ReallityView.swift in Sources */,
 				C1F4A58D2EA326EA001A9170 /* mujoco_ar.pb.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		72317BFA2A80F2D60044B240 /* Debug */ = {
+		72317BFA2A80F2D60044B240 /* Debug configuration for PBXProject "mujocoARViewer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -226,12 +215,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
+				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = ATTMC2WVK2;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				ENABLE_TESTABILITY = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -245,28 +235,33 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACH_O_TYPE = mh_execute;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = xros;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				XROS_DEPLOYMENT_TARGET = 1.0;
+				XROS_DEPLOYMENT_TARGET = 2.6;
 			};
 			name = Debug;
 		};
-		72317BFB2A80F2D60044B240 /* Release */ = {
+		72317BFB2A80F2D60044B240 /* Release configuration for PBXProject "mujocoARViewer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -289,12 +284,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
+				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = ATTMC2WVK2;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -302,67 +298,91 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACH_O_TYPE = mh_execute;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = xros;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
-				XROS_DEPLOYMENT_TARGET = 1.0;
+				XROS_DEPLOYMENT_TARGET = 2.6;
 			};
 			name = Release;
 		};
-		72317BFD2A80F2D60044B240 /* Debug */ = {
+		72317BFD2A80F2D60044B240 /* Debug configuration for PBXNativeTarget "mujocoARViewer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ATTMC2WVK2;
+				COMPILATION_CACHE_ENABLE_CACHING = NO;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = Source/Assets.xcassets;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_ON_DEMAND_RESOURCES = NO;
 				ENABLE_PREVIEWS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_PKGINFO_FILE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "MJ-ARViewer";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				INFOPLIST_KEY_NSHandsTrackingUsageDescription = "This app tracks your hand to teleoperate a robot.";
+				INFOPLIST_KEY_NSWorldSensingUsageDescription = "This app senses your surronuding world to reconstruct a simulation.";
+				LD_RUNPATH_SEARCH_PATHS = "";
+				MACH_O_TYPE = mh_execute;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.mjarviewer;
+				PRODUCT_BUNDLE_IDENTIFIER = test.mjar.2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.6;
 			};
 			name = Debug;
 		};
-		72317BFE2A80F2D60044B240 /* Release */ = {
+		72317BFE2A80F2D60044B240 /* Release configuration for PBXNativeTarget "mujocoARViewer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ATTMC2WVK2;
+				COMPILATION_CACHE_ENABLE_CACHING = NO;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = Source/Assets.xcassets;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_ON_DEMAND_RESOURCES = NO;
 				ENABLE_PREVIEWS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_PKGINFO_FILE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Source/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "MJ-ARViewer";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				INFOPLIST_KEY_NSHandsTrackingUsageDescription = "This app tracks your hand to teleoperate a robot.";
+				INFOPLIST_KEY_NSWorldSensingUsageDescription = "This app senses your surronuding world to reconstruct a simulation.";
+				LD_RUNPATH_SEARCH_PATHS = "";
+				MACH_O_TYPE = mh_execute;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = test.mjarviewer;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = test.mjar.2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 2.6;
 			};
 			name = Release;
 		};
@@ -372,19 +392,17 @@
 		72317BE12A80F2D30044B240 /* Build configuration list for PBXProject "mujocoARViewer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				72317BFA2A80F2D60044B240 /* Debug */,
-				72317BFB2A80F2D60044B240 /* Release */,
+				72317BFA2A80F2D60044B240 /* Debug configuration for PBXProject "mujocoARViewer" */,
+				72317BFB2A80F2D60044B240 /* Release configuration for PBXProject "mujocoARViewer" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		72317BFC2A80F2D60044B240 /* Build configuration list for PBXNativeTarget "mujocoARViewer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				72317BFD2A80F2D60044B240 /* Debug */,
-				72317BFE2A80F2D60044B240 /* Release */,
+				72317BFD2A80F2D60044B240 /* Debug configuration for PBXNativeTarget "mujocoARViewer" */,
+				72317BFE2A80F2D60044B240 /* Release configuration for PBXNativeTarget "mujocoARViewer" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

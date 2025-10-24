@@ -2,7 +2,7 @@ import SwiftUI
 import RealityKit
 import Network
 import ARKit
-import Foundation
+//import Foundation
 import QuartzCore
 
 // Import generated protobuf types
@@ -143,6 +143,8 @@ struct ImmersiveView: View {
     @StateObject private var server = HandshakeServer()
     @StateObject private var grpcManager = GRPCServerManager()
     @StateObject private var networkManager = NetworkInfoManager()
+    // Use the previous app model solely for hand tracking; keep existing gRPC/server logic
+    @StateObject private var appModel = 🥽AppModel()
     @State private var entity: ModelEntity?
     @State private var bodyEntities: [String: ModelEntity] = [:]
     @State private var usdzURL: String? = nil
@@ -409,11 +411,18 @@ struct ImmersiveView: View {
             // Just initialize network info, don't start server automatically
             networkManager.updateNetworkInfo()
             
-            // Start hand tracking
-            await startHandTracking()
+            // Start hand tracking using the old, proven AppModel pipeline
+            // run() internally starts ARKit session and processes hand updates
             
             // Legacy TCP server (can be removed once gRPC is working)
             // server.startListening()
+        }
+        .task {
+            appModel.run()
+        }
+        .task {
+            // Device/head tracking at ~90 Hz (non-blocking child task)
+            await appModel.processDeviceAnchorUpdates()
         }
         .onChange(of: usdzURL ?? server.usdzURL) { _, newValue in
             if let urlStr = newValue, let url = URL(string: urlStr) {
@@ -1079,139 +1088,43 @@ struct ImmersiveView: View {
     // MARK: - Hand Tracking Methods
     
     func getHandTrackingData() -> MujocoAr_HandTrackingUpdate {
-        return handTrackingData
-    }
-    
-    private func startHandTracking() async {
-        print("🖐️ [startHandTracking] Initializing hand tracking...")
-        
-        do {
-            if HandTrackingProvider.isSupported {
-                print("🖐️ [startHandTracking] Hand tracking is supported")
-                try await arkitSession.run([handTracking, worldTracking])
-                print("🖐️ [startHandTracking] ARKit session started")
-                
-                // Start processing hand updates
-                Task {
-                    await processHandUpdates()
-                }
-            } else {
-                print("⚠️ [startHandTracking] Hand tracking not supported on this device")
-            }
-        } catch {
-            print("❌ [startHandTracking] Failed to start hand tracking: \(error)")
-        }
-    }
-    
-    private func processHandUpdates() async {
-        print("🖐️ [processHandUpdates] Starting hand tracking update loop")
-        
-        for await update in handTracking.anchorUpdates {
-            let handAnchor = update.anchor
-            print("processHandUpdates is running.")
-            
-            guard handAnchor.isTracked else { continue }
-            
-            switch handAnchor.chirality {
-            case .left:
-                DispatchQueue.main.async {
-                    self.updateLeftHandData(handAnchor: handAnchor)
-                }
-            case .right:
-                DispatchQueue.main.async {
-                    self.updateRightHandData(handAnchor: handAnchor)
-                }
-            @unknown default:
-                break
-            }
-        }
-    }
-    
-    private func updateLeftHandData(handAnchor: HandAnchor) {
-        // Update wrist transform
-        handTrackingData.leftHand.wristMatrix = convertToMatrix4x4(handAnchor.originFromAnchorTransform)
-        print(handAnchor.originFromAnchorTransform)
-        
-        // Define the joint types in the specific order
-        let jointTypes: [HandSkeleton.JointName] = [
-            .wrist,
-            .thumbKnuckle, .thumbIntermediateBase, .thumbIntermediateTip, .thumbTip,
-            .indexFingerMetacarpal, .indexFingerKnuckle, .indexFingerIntermediateBase, .indexFingerIntermediateTip, .indexFingerTip,
-            .middleFingerMetacarpal, .middleFingerKnuckle, .middleFingerIntermediateBase, .middleFingerIntermediateTip, .middleFingerTip,
-            .ringFingerMetacarpal, .ringFingerKnuckle, .ringFingerIntermediateBase, .ringFingerIntermediateTip, .ringFingerTip,
-            .littleFingerMetacarpal, .littleFingerKnuckle, .littleFingerIntermediateBase, .littleFingerIntermediateTip, .littleFingerTip,
-        ]
-        
-        // Clear and rebuild joint matrices
-        handTrackingData.leftHand.skeleton.jointMatrices.removeAll()
-        
-        for (index, jointType) in jointTypes.enumerated() {
-            guard let joint = handAnchor.handSkeleton?.joint(jointType), joint.isTracked else {
-                // Add identity matrix for missing joints to maintain index consistency
-                handTrackingData.leftHand.skeleton.jointMatrices.append(convertToMatrix4x4(matrix_identity_float4x4))
-                continue
-            }
-            handTrackingData.leftHand.skeleton.jointMatrices.append(convertToMatrix4x4(joint.anchorFromJointTransform))
-        }
-        
-        // Update timestamp
-        handTrackingData.timestamp = Date().timeIntervalSince1970
-        print("Updated left hand skeleton")
-    }
-    
-    private func updateRightHandData(handAnchor: HandAnchor) {
-        // Update wrist transform
-        handTrackingData.rightHand.wristMatrix = convertToMatrix4x4(handAnchor.originFromAnchorTransform)
-        print(handAnchor.originFromAnchorTransform)
-        
-        // Define the joint types in the specific order
-        let jointTypes: [HandSkeleton.JointName] = [
-            .wrist,
-            .thumbKnuckle, .thumbIntermediateBase, .thumbIntermediateTip, .thumbTip,
-            .indexFingerMetacarpal, .indexFingerKnuckle, .indexFingerIntermediateBase, .indexFingerIntermediateTip, .indexFingerTip,
-            .middleFingerMetacarpal, .middleFingerKnuckle, .middleFingerIntermediateBase, .middleFingerIntermediateTip, .middleFingerTip,
-            .ringFingerMetacarpal, .ringFingerKnuckle, .ringFingerIntermediateBase, .ringFingerIntermediateTip, .ringFingerTip,
-            .littleFingerMetacarpal, .littleFingerKnuckle, .littleFingerIntermediateBase, .littleFingerIntermediateTip, .littleFingerTip,
-        ]
-        
-        // Clear and rebuild joint matrices
-        handTrackingData.rightHand.skeleton.jointMatrices.removeAll()        
+        // Build the protobuf from the DataManager-backed AppModel state
+        var update = MujocoAr_HandTrackingUpdate()
+        let data = DataManager.shared.latestHandTrackingData
 
-        for (index, jointType) in jointTypes.enumerated() {
-            guard let joint = handAnchor.handSkeleton?.joint(jointType), joint.isTracked else {
-                // Add identity matrix for missing joints to maintain index consistency
-                handTrackingData.rightHand.skeleton.jointMatrices.append(convertToMatrix4x4(matrix_identity_float4x4))
-                continue
-            }
-            print(index)
-            handTrackingData.rightHand.skeleton.jointMatrices.append(convertToMatrix4x4(joint.anchorFromJointTransform))
-        }
-                
-        // Update timestamp
-        handTrackingData.timestamp = Date().timeIntervalSince1970
-        print("Updated right hand skeleton")
+        // Timestamp
+        update.timestamp = Date().timeIntervalSince1970
+
+        // Wrist matrices
+        update.leftHand.wristMatrix = convertToMatrix4x4(from: data.leftWrist)
+        update.rightHand.wristMatrix = convertToMatrix4x4(from: data.rightWrist)
+
+        // Skeleton joints (fixed size 25 per AppModel.Skeleton)
+        update.leftHand.skeleton.jointMatrices = data.leftSkeleton.joints.map { convertToMatrix4x4(from : $0) }
+        update.rightHand.skeleton.jointMatrices = data.rightSkeleton.joints.map { convertToMatrix4x4(from : $0) }
+
+        return update
     }
     
-    private func convertToMatrix4x4(_ matrix: simd_float4x4) -> MujocoAr_Matrix4x4 {
-        var result = MujocoAr_Matrix4x4()
-        // Correct matrix layout - columns should be accessed properly
-        result.m00 = matrix.columns.0.x
-        result.m01 = matrix.columns.1.x
-        result.m02 = matrix.columns.2.x
-        result.m03 = matrix.columns.3.x
-        result.m10 = matrix.columns.0.y
-        result.m11 = matrix.columns.1.y
-        result.m12 = matrix.columns.2.y
-        result.m13 = matrix.columns.3.y
-        result.m20 = matrix.columns.0.z
-        result.m21 = matrix.columns.1.z
-        result.m22 = matrix.columns.2.z
-        result.m23 = matrix.columns.3.z
-        result.m30 = matrix.columns.0.w
-        result.m31 = matrix.columns.1.w
-        result.m32 = matrix.columns.2.w
-        result.m33 = matrix.columns.3.w
-        return result
-    }
 }
 
+func convertToMatrix4x4(from jointMatrix: simd_float4x4) -> MujocoAr_Matrix4x4 {
+    var matrix = MujocoAr_Matrix4x4()
+    matrix.m00 = Float(jointMatrix.columns.0.x)
+    matrix.m01 = Float(jointMatrix.columns.1.x)
+    matrix.m02 = Float(jointMatrix.columns.2.x)
+    matrix.m03 = Float(jointMatrix.columns.3.x)
+    matrix.m10 = Float(jointMatrix.columns.0.y)
+    matrix.m11 = Float(jointMatrix.columns.1.y)
+    matrix.m12 = Float(jointMatrix.columns.2.y)
+    matrix.m13 = Float(jointMatrix.columns.3.y)
+    matrix.m20 = Float(jointMatrix.columns.0.z)
+    matrix.m21 = Float(jointMatrix.columns.1.z)
+    matrix.m22 = Float(jointMatrix.columns.2.z)
+    matrix.m23 = Float(jointMatrix.columns.3.z)
+    matrix.m30 = Float(jointMatrix.columns.0.w)
+    matrix.m31 = Float(jointMatrix.columns.1.w)
+    matrix.m32 = Float(jointMatrix.columns.2.w)
+    matrix.m33 = Float(jointMatrix.columns.3.w)
+    return matrix
+}
