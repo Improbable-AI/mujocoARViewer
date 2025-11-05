@@ -5,7 +5,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R, Slerp
 from copy import deepcopy
 from mujoco_arviewer import MJARViewer
-
+import time 
 
 
 def hand2pose(hand, side = "right"): 
@@ -48,10 +48,9 @@ def main(args):
     data = mujoco.MjData(model)
 
     viewer = MJARViewer(avp_ip=args.ip, enable_hand_tracking=True)
-    viewer.load_scene("./scenes/franka_emika_panda/scene_blockpush.xml", attach_to=[0, -0.1, 0.6, 90])
+    viewer.load_scene("./scenes/franka_emika_panda/scene_blockpush.xml", attach_to=[0, -0.1, 0.75, 90])
     viewer.register(model, data)
 
-    viewer = mujoco.viewer.launch_passive(model, data)
 
     class OperationalSpaceController:
 
@@ -238,6 +237,9 @@ def main(args):
         data.mocap_pos[controller.mocap_id] = np.array([0.5, 0.0, 0.5])
         data.mocap_quat[controller.mocap_id] = np.array([0, 1, 0, 0])
 
+        data.qvel[:] = 0.0
+        
+
         angles = []
         for _ in range(3):
             angles.append(np.deg2rad(np.random.choice([-90, 0, 90])))
@@ -245,12 +247,29 @@ def main(args):
         
         data.qpos[12:16] = rot
 
+        data.qacc_warmstart[:] = 0.0
         mujoco.mj_forward(model, data)
 
         for i in range(1000):
 
+            # data.mocap_pos[controller]
+
             hand = viewer.get_hand_tracking() 
             frame = hand2pose(hand, side="right")
+
+            data.mocap_pos[controller.mocap_id] = frame[:3, 3]
+            data.mocap_quat[controller.mocap_id] = R.from_matrix(frame[:3, :3]).as_quat(scalar_first = True)
+            mujoco.mj_forward(model, data)
+            time.sleep(1/600.)
+            viewer.sync()
+
+        for i in range(1000):
+
+
+            hand = viewer.get_hand_tracking() 
+            frame = hand2pose(hand, side="right")
+
+            mujoco.mj_forward(model, data)
 
             target_pos = frame[:3, 3]
             target_quat = R.from_matrix(frame[:3, :3]).as_quat(scalar_first = True)
@@ -260,11 +279,12 @@ def main(args):
             mujoco.mju_mat2Quat(cur_quat, data.site(controller.site_id).xmat)
 
             slerp = Slerp([0, 1], R.from_quat([cur_quat, target_quat]))
-            alpha = i / 2000
+            alpha = i / 1000
 
             data.mocap_pos[controller.mocap_id] = cur_pos * (1 - alpha) + target_pos * alpha
             data.mocap_quat[controller.mocap_id] = slerp(alpha).as_quat()
             controller.pose2torque(model, data)
+            time.sleep(1/600.)
             viewer.sync()
             
 
@@ -287,7 +307,7 @@ def main(args):
             return False
 
 
-    ep_idx = 0
+    ep_idx = args.start
 
     reset(model, data)
 
@@ -301,6 +321,7 @@ def main(args):
 
         controller.pose2torque(model, data)
         viewer.sync() 
+        time.sleep(1/600.)
 
         if success(model, data):
             print("Success! Resetting...")
@@ -315,6 +336,7 @@ if __name__ == "__main__":
     import argparse 
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default="127.0.0.1")
+    parser.add_argument("--start", default=0, type=int)
     args = parser.parse_args()
 
     main(args)

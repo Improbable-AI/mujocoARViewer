@@ -1,9 +1,10 @@
 <mujoco model="panda scene">
   <include file="panda.xml"/>
   <include file="reorientation_cube.xml"/>
-  <option o_solref="0.00001 1" o_solimp="0.01 1" impratio="1000" noslip_iterations="1">
+  <option integrator="implicitfast"/>
+  <!-- <option o_solref="0.00001 1" o_solimp="0.01 1" impratio="1000" noslip_iterations="1">
     <flag override="enable" />
-  </option>
+  </option> -->
 
   <statistic center="0.3 0 0.35" extent="0.8" meansize="0.05"/>
 

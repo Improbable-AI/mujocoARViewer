@@ -1,8 +1,9 @@
-import mujoco 
 import numpy as np 
 from tqdm import trange
 
 def main(args):
+
+    import mujoco 
 
     xml_path = "./scenes/franka_emika_panda/scene_blockpush.xml"
 
@@ -20,7 +21,7 @@ def main(args):
         viewer = mujoco.viewer.launch_passive(model, data)
 
 
-    for ep_idx in range(50): 
+    for ep_idx in range(1,50): 
         
         traj = np.load(f"./logs/blockpush_ep{ep_idx}.npz")
 
@@ -37,11 +38,16 @@ def main(args):
         data.mocap_pos[1] = mocap_log[0, :3]
         data.mocap_quat[1] = mocap_log[0, 3:]
 
+        data.qacc_warmstart[:] = 0.0
+
         mujoco.mj_forward(model, data)
 
         for t in trange(T): 
             data.ctrl = ctrl_log[t]
             mujoco.mj_step(model, data)
+            drift = np.linalg.norm(data.qpos - qpos_log[t])
+            if drift > 1e-2:
+                print(f"Warning: drift at step {t}: {drift}")
             try: 
                 viewer.sync()
             except Exception as e:
@@ -49,7 +55,7 @@ def main(args):
 
 if __name__ == "__main__":
 
-    import arpgarse 
+    import argparse 
     parser = argparse.ArgumentParser()
     parser.add_argument("--viewer", default="mujoco", choices=["mujoco", "ar"])
     parser.add_argument("--ip", default="192.168.0.1")

@@ -3,8 +3,6 @@ from pathlib import Path
 
 import mujoco
 import mujoco.viewer
-from loop_rate_limiters import RateLimiter
-
 import mink
 
 _HERE = Path(__file__).parent
@@ -39,33 +37,40 @@ if __name__ == "__main__":
     data = configuration.data
     solver = "daqp"
 
-    with mujoco.viewer.launch_passive(
-        model=model, data=data, show_left_ui=False, show_right_ui=False
-    ) as viewer:
-        mujoco.mjv_defaultFreeCamera(model, viewer.cam)
+    from mujoco_arviewer import MJARViewer
+    viewer = MJARViewer(avp_ip="192.168.0.1", enable_hand_tracking=True)
+    viewer.load_scene(_XML.as_posix(), attach_to=[0, 0.3, 0.6, 180])
+    viewer.register(model, data)
 
-        configuration.update_from_keyframe("grasp hard")
+    # configuration.update_from_keyframe("grasp hard")
 
-        # Initialize mocap bodies at their respective sites.
-        posture_task.set_target_from_configuration(configuration)
-        for finger in fingers:
-            mink.move_mocap_to_frame(model, data, f"{finger}_target", finger, "site")
+    # Initialize mocap bodies at their respective sites.
+    posture_task.set_target_from_configuration(configuration)
+    for finger in fingers:
+        mink.move_mocap_to_frame(model, data, f"{finger}_target", finger, "site")
 
-        rate = RateLimiter(frequency=500.0, warn=False)
-        dt = rate.dt
-        t = 0
-        while viewer.is_running():
-            # Update task target.
-            for finger, task in zip(fingers, finger_tasks):
-                task.set_target(
-                    mink.SE3.from_mocap_name(model, data, f"{finger}_target")
-                )
+    dt = 1.0 / 500.0
+    t = 0
+    while True: 
 
-            vel = mink.solve_ik(configuration, tasks, rate.dt, solver, 1e-5)
-            configuration.integrate_inplace(vel, rate.dt)
-            mujoco.mj_camlight(model, data)
+        hand = viewer.get_hand_tracking()
+        right_fingers = hand["right_wrist"] @ hand["right_fingers"]
+        # Update posture target.
+        mocap_ids = [mink.get_mocap_id(model, finger + "_target") for finger in fingers]
+        finger_ids = [0, 4, 9, 14, 19]
+        for mcid, fid in zip(mocap_ids, finger_ids):
+            data.mocap_pos[mcid] = right_fingers[fid][:3, 3]
 
-            # Visualize at fixed FPS.
-            viewer.sync()
-            rate.sleep()
-            t += dt
+        # Update task target.
+        for finger, task in zip(fingers, finger_tasks):
+            task.set_target(
+                mink.SE3.from_mocap_name(model, data, f"{finger}_target")
+            )
+
+        vel = mink.solve_ik(configuration, tasks, dt, solver, 1e-5)
+        configuration.integrate_inplace(vel, dt)
+        mujoco.mj_camlight(model, data)
+
+        # Visualize at fixed FPS.
+        viewer.sync()
+        t += dt

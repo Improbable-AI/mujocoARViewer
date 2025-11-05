@@ -22,7 +22,8 @@ pip install "mujoco-ar-viewer[usd]"
 
 ### VisionOS App 
 
-Open App Store on VisionOS, and search for [mujocoARViewer]. 
+Open App Store on VisionOS, and search for [mujocoARViewer](App Store). 
+
 
 ## Quick Start
 
@@ -50,13 +51,13 @@ viewer.register(model, data)
 # Simulation loop
 while True:
     # (Optional) access hand tracking results 
-    hand_tracking = viewer.get_hand_tracking() 
-    # (Optional) map hand tracking to mujoco ctrl
+    hand_tracking = viewer.get_hand_tracking()  
+    # (Optional) map hand tracking to mujoco ctrl 
     data.ctrl = hand2ctrl(hand_tracking)
 
-    # Step the simulation
+    # Step the simulation 
     mujoco.mj_step(model, data)
-    # Sync with AR device
+    # Sync with AR device 
     viewer.sync()
 ```
 
@@ -64,10 +65,10 @@ while True:
 
 ### Where to attach your mujoco `world` frame in AR 
 
-
 Since this is a viewer in augmented reality (which by defintion, blends your simulated environment with your real world environment), deciding where to attach your simulation scene's `world` frame in your actual physical space in real world is important. You can determine this by passing in `attach_to` as an argument either by 
 1. a 7-dim vector of `xyz` translation and scalar-first quaternion representation (i.e., `[x,y,z,qw,qx,qy,qz]`)
 2. a 4-dim vector of `xyz` translation and rotation around `z-axis`, specified as a degree. (i.e., `[x,y,z,zrot]`)
+    > Assuming you have a Z-UP convention for your mujoco environment, this second option might be enough. 
 
 ```python 
 # attach the `world` frame 0.3m above the visionOS origin, rotating 90 degrees around z-axis. 
@@ -115,6 +116,20 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
     We've recently ran sanity checking on every models on [mujoco-menagerie](https://github.com/google-deepmind/mujoco_menagerie), and these are the results.
 
     [benchmark_on_mujoco_menagerie.md](docs/benchmark.md)
+
+## Examples 
+
+### Teleoperation in AR Environment
+
+Open-sourced, developer friendly version of DART. Example codes are [teleop_osc_franka.py](examples/teleop_osc_franka.py) and [teleop_diffik_shadow.py](examples/teleop_diffik.py)
+
+### Disturb Policy Rollouts in AR 
+
+You can visualize policy rollouts in AR.
+
+
+
+
 
 ## License
 
