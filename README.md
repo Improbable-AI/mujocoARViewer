@@ -1,6 +1,6 @@
 # MuJoCo AR Viewer
 
-A Python package for visualizing MuJoCo physics simulations in Augmented Reality using Apple Vision Pro and other AR devices.
+A Python package for visualizing MuJoCo physics simulations in Augmented Reality using Apple Vision Pro and other AR devices. 
 
 ![assets/diagram-mjar3.png](assets/diagram-mjar3.png)
 
@@ -22,7 +22,7 @@ pip install "mujoco-ar-viewer[usd]"
 
 ### VisionOS App 
 
-Open App Store on VisionOS, and search for [mujocoARViewer](App Store). 
+Open App Store on VisionOS, and search for [mujocoARViewer](https://apps.apple.com/us/app/mujocoarviewer/id6754344108). 
 
 
 ## Quick Start
@@ -60,6 +60,30 @@ while True:
     # Sync with AR device 
     viewer.sync()
 ```
+
+## Example Use cases 
+
+1. **Teleoperation in AR**
+
+    This repository is an open-sourced, developer friendly package that powers [DART](https://younghyopark.me/dexhub). You can check out some manipulation environments we've made and teleoperation codes [here](https://github.com/Improbable-AI/mujoco-manipulation-envs).
+
+    ```bash
+    git clone git@github.com:Improbable-AI/mujoco-manipulation-envs.git
+    cd mujoco-manipulation-envs
+    python teleop.py --ip 10.31.191.37 --task reorient_esh --ver test --attach_to 0 -0.1 0.8 90
+    ```
+
+    
+
+2. **Just bring your robot in mujoco world to real life in AR**
+
+    It's just better to watch robots doing things in an AR environment rather than a 2D mujoco viewer. You get a better sense of how the robot's behaving in 3D space. 
+
+    ```bash
+    mjpython examples/replay.py  --viewer ar
+    ```
+
+
 
 ## Recommended Read  
 
@@ -117,15 +141,6 @@ viewer.load_scene(scene_path, attach_to=[0, 0, 0.3, 90])
 
     [benchmark_on_mujoco_menagerie.md](docs/benchmark.md)
 
-## Examples 
-
-### Teleoperation in AR Environment
-
-Open-sourced, developer friendly version of DART. Example codes are [teleop_osc_franka.py](examples/teleop_osc_franka.py) and [teleop_diffik_shadow.py](examples/teleop_diffik.py)
-
-### Disturb Policy Rollouts in AR 
-
-You can visualize policy rollouts in AR.
 
 
 

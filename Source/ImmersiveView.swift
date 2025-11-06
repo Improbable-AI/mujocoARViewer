@@ -161,6 +161,8 @@ struct ImmersiveView: View {
     @State private var inputPort: String = "50051"
     @State private var isMinimized: Bool = false
     @Namespace private var minimizeNS
+    // UI control for hand/upper limb visibility
+    @State private var upperLimbVisible: Bool = false
     
     // Model attachment offset state (ZUP coordinates)
     @State private var attachToPosition: SIMD3<Float>? = nil
@@ -302,6 +304,22 @@ struct ImmersiveView: View {
                                         Text("\(networkManager.connectionStatus)")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
+                                    }
+
+                                    // Upper limb visibility toggle
+                                    Divider()
+                                        .padding(.vertical, 4)
+                                    HStack {
+                                        Text("Show My Hand")
+                                            .font(.caption)
+                                            .foregroundColor(.primary)
+                                        Spacer()
+                                        Toggle(isOn: $upperLimbVisible) {
+                                            Text(upperLimbVisible ? "Visible" : "Hidden")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .labelsHidden()
                                     }
                                     
                                     if !networkManager.isServerRunning {
@@ -446,6 +464,8 @@ struct ImmersiveView: View {
                 networkManager.updateConnectionStatus("Disconnected")
             }
         }
+        .upperLimbVisibility(upperLimbVisible ? .visible : .hidden)
+
     }
     
     private var connectionStatusColor: Color {
