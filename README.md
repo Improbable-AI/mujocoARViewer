@@ -5,6 +5,10 @@ A Python package for visualizing MuJoCo physics simulations in Augmented Reality
 ![assets/diagram-mjar3.png](assets/diagram-mjar3.png)
 
 
+https://github.com/user-attachments/assets/63bb3377-ff5d-48ab-9c79-9a95834643be
+
+
+
 ## Installation
 
 ### Python API 
