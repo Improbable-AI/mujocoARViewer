@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mujoco-ar-viewer"
-version = "0.3.6"
+version = "0.4.1"
 description = "AR visualization for MuJoCo physics simulations"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -32,6 +32,8 @@ dependencies = [
     "grpcio-tools>=1.56.0",
     "numpy>=1.24.0",
     "protobuf>=4.24.0",
+    "requests",
+    "python-multipart",
 ]
 
 [project.optional-dependencies]
