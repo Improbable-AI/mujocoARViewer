@@ -160,7 +160,7 @@ class MJARViewer:
                 try: 
                     usdz_path = self._convert_to_usdz(model_path)
                 except Exception as e:
-                    usdz_path = convert_and_download(server="http://improbable382.csail.mit.edu:8080", \
+                    usdz_path = convert_and_download(server="http://mujoco-usd-convert.xyz", \
                                         scene_xml=Path(model_path), out_dir=Path(model_path).parent)
         else: 
             usdz_path = model_path

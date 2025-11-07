@@ -56,12 +56,13 @@ def zip_scene_dir(scene_xml: Path) -> tuple[Path, str]:
 
 def convert_and_download(server: str, scene_xml: Path, out_dir: Path) -> Path:
     zip_path, xml_relpath = zip_scene_dir(scene_xml)
+    print("zipped!")
 
     files = {
         "file": ("bundle.zip", open(zip_path, "rb"), "application/zip"),
     }
     data = {"xml_relpath": xml_relpath}
-
+    print("data")
     try:
         resp = requests.post(f"{server}/convert", files=files, data=data, timeout=300)
         resp.raise_for_status()
@@ -89,7 +90,7 @@ def convert_and_download(server: str, scene_xml: Path, out_dir: Path) -> Path:
 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Client for MuJoCo→USDZ converter API")
-    parser.add_argument("--server", default="http://improbable382.csail.mit.edu:8080", help="Base URL of the converter server")
+    parser.add_argument("--server", default="http://mujoco-usd-convert.xyz", help="Base URL of the converter server")
     parser.add_argument("--xml", default="scenes/franka_emika_panda/scene_mughang.xml", help="Path to the scene XML")
     parser.add_argument("--out", default="downloads", help="Output directory to save USDZ")
     args = parser.parse_args(argv)
@@ -99,6 +100,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     out_dir = Path(args.out)
 
     try:
+        print("here!")
         out_path = convert_and_download(server, scene_xml, out_dir)
     except Exception as e:
         print(f"Conversion failed: {e}")
