@@ -13,11 +13,13 @@ A Python package for visualizing MuJoCo physics simulations in Augmented Reality
 pip install mujoco-ar-viewer
 ```
 
-To use automatic MuJoCo XML-to-USD conversion feature (supported only on Linux and Windows via [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter) from project [Newton](https://github.com/newton-physics)), use: 
+To run MuJoCo XML-to-USD conversion locally (supported only on Linux and Windows via [mujoco-usd-converter](https://github.com/newton-physics/mujoco-usd-converter) from project [Newton](https://github.com/newton-physics)), use 
 
 ```bash 
 pip install "mujoco-ar-viewer[usd]"
 ```
+
+If not, it will use the [public-hosted server API](http://mujoco-usd-convert.xyz) for the USD conversion. 
 
 
 ### VisionOS App 
