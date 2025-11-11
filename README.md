@@ -30,7 +30,7 @@ Open App Store on VisionOS, and search for [mujocoARViewer](https://apps.apple.c
 ## Quick Start
 
 ```python
-from mujoco_arviewer import MJARViewer
+from mujoco_ar_viewer import mujocoARViewer
 import mujoco
 
 # path to mujoco XML 
@@ -40,15 +40,15 @@ xml_path = "path/to/your/model.xml"
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 
-# Initialize the AR viewer with your device's IP
 # Device's IP will be presented when you launch the app 
-viewer = MJARViewer(avp_ip="192.168.1.100", \
-                    enable_hand_tracking = True)
-# Send a MuJoCo model to the AR device
-# (Linux Only) it will automatically convert to USD
-viewer.load_scene(xml_path) 
-# Register the model and data with the viewer
+viewer = mujocoARViewer(avp_ip = "192.168.1.100")
+viewer.load_scene(xml_path)
 viewer.register(model, data)
+
+# (Optional) it is very similar to how we define mujoco GUI viewer
+import mujoco.viewer
+mj_gui = mujoco.viewer.launch_passive(model, data, \
+                  show_left_ui=True, show_right_ui=True)
 
 # Simulation loop
 while True:
@@ -61,6 +61,8 @@ while True:
     mujoco.mj_step(model, data)
     # Sync with AR device 
     viewer.sync()
+    # (Optional) Render mujoco native GUI  
+    mj_gui.sync()
 ```
 
 ## Example Use cases 

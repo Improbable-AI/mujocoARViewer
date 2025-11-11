@@ -1,19 +1,23 @@
 import numpy as np 
 from tqdm import trange
+import time 
+from pathlib import Path
+
+CUR_DIR = Path(__file__).resolve().parent
 
 def main(args):
 
     import mujoco 
 
-    xml_path = "./scenes/franka_emika_panda/scene_blockpush.xml"
+    xml_path = f"{CUR_DIR}/../scenes/franka_emika_panda/scene_blockpush.xml"
 
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
 
     if args.viewer == "ar": 
-        from mujoco_arviewer import MJARViewer
-        viewer = MJARViewer(avp_ip=args.ip)
-        viewer.load_scene(xml_path, attach_to=[0, 0.3, 0.6, 180])
+        from mujoco_ar_viewer import mujocoARViewer
+        viewer = mujocoARViewer.launch(args.ip)
+        viewer.load_scene(xml_path, attach_to=[0.2, 1.0, 0.7, -90])
         viewer.register(model, data)
 
     elif args.viewer == "mujoco": 
@@ -21,9 +25,9 @@ def main(args):
         viewer = mujoco.viewer.launch_passive(model, data)
 
 
-    for ep_idx in range(1,50): 
+    for ep_idx in range(1,5): 
         
-        traj = np.load(f"./logs/blockpush_ep{ep_idx}.npz")
+        traj = np.load(f"./logs/ep{ep_idx}.npz")
 
         qpos_log = traj['qpos']
         qvel_log = traj['qvel']
@@ -45,13 +49,8 @@ def main(args):
         for t in trange(T): 
             data.ctrl = ctrl_log[t]
             mujoco.mj_step(model, data)
-            drift = np.linalg.norm(data.qpos - qpos_log[t])
-            if drift > 1e-2:
-                print(f"Warning: drift at step {t}: {drift}")
-            try: 
-                viewer.sync()
-            except Exception as e:
-                pass 
+            viewer.sync()
+            time.sleep(1/1000.)
 
 if __name__ == "__main__":
 

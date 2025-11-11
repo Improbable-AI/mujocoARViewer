@@ -1,6 +1,6 @@
 import mujoco 
 import mujoco.viewer as viewer
-from mujoco_arviewer import MJARViewer
+from mujoco_ar_viewer import mujocoARViewer
 from avp_stream import VisionProStreamer
 from scipy.spatial.transform import Rotation as R
 import time
@@ -9,7 +9,7 @@ import time
 model = mujoco.MjModel.from_xml_path("./scenes/mocaps.xml")
 data = mujoco.MjData(model)
 
-arviewer = MJARViewer(avp_ip="10.29.178.87", enable_hand_tracking=True)
+arviewer = mujocoARViewer(avp_ip="10.29.178.87", enable_hand_tracking=True)
 # streamer = VisionProStreamer(ip="10.29.178.87")
 for _ in range(10):
     time.sleep(0.5)

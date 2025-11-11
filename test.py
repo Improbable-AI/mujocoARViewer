@@ -1,5 +1,5 @@
 import mujoco 
-from mujoco_arviewer import MJARViewer
+from mujoco_ar_viewer import MJARViewer
 import mujoco.viewer
 
 xml_path = "scenes/franka_emika_panda/scene.xml"

@@ -1,10 +1,9 @@
 import mujoco 
-from mujoco_arviewer import MJARViewer
+from mujoco_ar_viewer import mujocoARViewer
 import mujoco.viewer
 import numpy as np
 from scipy.spatial.transform import Rotation as R, Slerp
 from copy import deepcopy
-from mujoco_arviewer import MJARViewer
 import time 
 
 
@@ -47,7 +46,7 @@ def main(args):
     model = mujoco.MjModel.from_xml_path("./scenes/franka_emika_panda/scene_blockpush.xml")
     data = mujoco.MjData(model)
 
-    viewer = MJARViewer(avp_ip=args.ip, enable_hand_tracking=True)
+    viewer = mujocoARViewer(avp_ip=args.ip, enable_hand_tracking=True)
     viewer.load_scene("./scenes/franka_emika_panda/scene_blockpush.xml", attach_to=[0, -0.1, 0.75, 90])
     viewer.register(model, data)
 

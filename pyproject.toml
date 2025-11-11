@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mujoco-ar-viewer"
-version = "0.4.1"
+version = "0.4.8"
 description = "AR visualization for MuJoCo physics simulations"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -48,7 +48,7 @@ Issues = "https://github.com/Improbable-AI/mujocoARViewer/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["mujoco_arviewer*"]
+include = ["mujoco_ar_viewer*"]
 exclude = ["tests*", "scenes*", "Source*"]
 
 [tool.setuptools.package-data]

@@ -2,24 +2,98 @@ import mujoco
 import grpc
 import time
 import threading
-import http.server
-import socketserver
 import os
-import gzip
-import tempfile
 from pathlib import Path
 import numpy as np
 from copy import deepcopy
 # Import generated gRPC classes
 from .generated import mujoco_ar_pb2, mujoco_ar_pb2_grpc
-from .upload_xml import zip_scene_dir, convert_and_download
+from .upload_xml import convert_and_download
 from scipy.spatial.transform import Rotation as R
+import shutil
+import re 
+from typing import List, Tuple
 
 # Constants and helper functions for hand tracking data processing
 YUP2ZUP = np.array([[[1, 0, 0, 0], 
                     [0, 0, -1, 0], 
                     [0, 1, 0, 0],
                     [0, 0, 0, 1]]], dtype=np.float64)
+
+
+def create_xml_from_model(model, result_xml: str): 
+
+    # last xml path  (last path of result_xml)
+    xml_file = os.path.basename(result_xml)
+    save_dir = os.path.dirname(result_xml)
+    os.makedirs(save_dir, exist_ok=True)
+
+    # dump the generated XML to disk
+    mujoco.mj_saveLastXML(result_xml, model)
+
+    # read XML content once
+    with open(result_xml, "r") as f:
+        xml_content = f.read()
+
+    meshdir_matches = re.findall(r'meshdir="([^"]+)"', xml_content)
+    texturedir_matches = re.findall(r'texturedir="([^"]+)"', xml_content)
+    meshdir_path = meshdir_matches[0] if len(meshdir_matches) > 0 else ""
+    texturedir_path = texturedir_matches[0] if len(texturedir_matches) > 0 else ""
+
+    deps = mujoco.mju_getXMLDependencies(result_xml)
+    # remove result_xml from deps
+    deps = [os.path.abspath(dep) for dep in deps if os.path.basename(dep) != xml_file]
+
+    correct_deps = [dep for dep in deps if save_dir not in os.path.abspath(dep)]
+    incorrect_deps = [dep for dep in deps if save_dir in os.path.abspath(dep)]
+    
+    # robust default when abs_deps is empty (shouldn't happen normally)
+    if len(correct_deps) > 0:
+        maximal_shareable_path = os.path.commonpath(os.path.abspath(dep) for dep in correct_deps)
+    else:
+        maximal_shareable_path = os.path.dirname(os.path.abspath(result_xml))
+
+    # map non-absolute deps to the maximal shareable prefix using their basenames
+    incorrect_deps = [os.path.join(maximal_shareable_path, os.path.basename(d)) for d in incorrect_deps]
+    deps = correct_deps + incorrect_deps
+
+
+    # perform all replacements in-memory and write once at the end
+    replacements: List[Tuple[str, str]] = []
+
+    for dep in deps:
+        if os.path.basename(dep) == xml_file:
+            continue
+
+        # copy the "dep" file to the save_dir
+        target_root = texturedir_path if ".png" in dep else meshdir_path
+        dest_dir = os.path.join(
+            save_dir,
+            target_root,
+            os.path.relpath(os.path.dirname(dep), maximal_shareable_path),
+        )
+        os.makedirs(dest_dir, exist_ok=True)
+
+        dest_path = os.path.join(
+            save_dir,
+            target_root,
+            os.path.relpath(dep, maximal_shareable_path),
+        )
+        shutil.copy(dep, dest_path)
+
+        # remember replacement: absolute -> relative path
+        relative_dep_path = os.path.relpath(dep, maximal_shareable_path)
+        replacements.append((dep, relative_dep_path))
+
+    # apply replacements in memory, then write once
+    for abs_path, rel_path in replacements:
+        xml_content = xml_content.replace(abs_path, rel_path)
+
+    with open(result_xml, "w") as f:
+        f.write(xml_content)
+
+    print("saved to", result_xml)
+
 
 def process_matrix(message):
     """Convert protobuf matrix to numpy array with proper shape"""
@@ -85,10 +159,11 @@ def get_wrist_roll(mat):
 
     return theta_x
 
-class MJARViewer: 
+class mujocoARViewer: 
 
     def __init__(self, avp_ip, grpc_port = 50051, enable_hand_tracking=False): 
         self.avp_ip = avp_ip
+
         self.grpc_port = grpc_port
         self.enable_hand_tracking = enable_hand_tracking
         
@@ -117,6 +192,11 @@ class MJARViewer:
             
         # Auto-start pose streaming
         self.start_pose_streaming()
+
+    @staticmethod
+    def launch(avp_ip, grpc_port = 50051, enable_hand_tracking=False):
+        """Alternative launcher method"""
+        return mujocoARViewer(avp_ip, grpc_port, enable_hand_tracking)
         
     def _setup_grpc_client(self):
         """Setup gRPC client connection"""
@@ -693,7 +773,7 @@ if __name__ == "__main__":
     xml_path = "scenes/franka_emika_panda/scene.xml"
     avp_ip = "10.29.194.74"
 
-    arviewer = MJARViewer(avp_ip = avp_ip) 
+    arviewer = mujocoARViewer(avp_ip = avp_ip) 
     
     # Example with attach_to offset (7-element array: [x,y,z,qw,qx,qy,qz] in ZUP coordinates)
     attach_to = [0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]  # 0.5m right, 1m up, no rotation

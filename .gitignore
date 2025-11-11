@@ -1,4 +1,13 @@
 dist/
 .vscode/
 *.egg-info
-logs/
+# Ignore all logs by default, but keep a specific file tracked
+logs/*
+!logs/ep0.npz
+!logs/ep1.npz
+!logs/ep2.npz
+!logs/ep3.npz
+!logs/ep4.npz
+!logs/ep5.npz
+!logs/ep6.npz
+!logs/ep7.npz   
